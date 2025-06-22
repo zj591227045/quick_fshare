@@ -730,4 +730,4 @@ class MonitoringService {
   }
 }
 
-module.exports = new MonitoringService() 
+module.exports = MonitoringService 

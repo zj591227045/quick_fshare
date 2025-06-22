@@ -6,6 +6,8 @@ const DatabaseManager = require('../config/database')
 class SystemController {
   constructor() {
     this.db = new DatabaseManager()
+    this.thumbnailService = new ThumbnailService()
+    this.monitoringService = new MonitoringService()
   }
 
   /**
@@ -14,7 +16,7 @@ class SystemController {
   async getSystemStats(req, res) {
     try {
       // 获取当前系统状态
-      const currentStats = await MonitoringService.getCurrentStats()
+      const currentStats = await this.monitoringService.getCurrentStats()
       
       // 获取数据库统计
       const dbStats = await this.getDatabaseStats()
@@ -23,7 +25,7 @@ class SystemController {
       const accessStats = await this.getAccessStats()
       
       // 获取缩略图缓存统计
-      const thumbnailStats = await ThumbnailService.getCacheStats()
+      const thumbnailStats = await this.thumbnailService.getCacheStats()
 
       res.json({
         success: true,
@@ -50,7 +52,7 @@ class SystemController {
   async getHistoricalMetrics(req, res) {
     try {
       const hours = parseInt(req.query.hours) || 24
-      const metrics = await MonitoringService.getHistoricalMetrics(hours)
+      const metrics = await this.monitoringService.getHistoricalMetrics(hours)
 
       res.json({
         success: true,
@@ -311,7 +313,7 @@ class SystemController {
   async getSystemAlerts(req, res) {
     try {
       const limit = parseInt(req.query.limit) || 50
-      const alerts = await MonitoringService.getAlerts(limit)
+      const alerts = await this.monitoringService.getAlerts(limit)
 
       res.json({
         success: true,
@@ -388,7 +390,7 @@ class SystemController {
    */
   async cleanupThumbnails(req, res) {
     try {
-      const success = await ThumbnailService.clearAllCache()
+      const success = await this.thumbnailService.clearAllCache()
 
       if (success) {
         logger.info('缩略图缓存清理完成')
@@ -442,13 +444,13 @@ class SystemController {
 
       // 检查监控服务
       health.services.monitoring = {
-        status: MonitoringService.isCollecting ? 'running' : 'stopped',
-        collecting: MonitoringService.isCollecting
+        status: this.monitoringService.isCollecting ? 'running' : 'stopped',
+        collecting: this.monitoringService.isCollecting
       }
 
       // 检查磁盘空间
       try {
-        const diskUsage = await MonitoringService.getDiskUsage()
+        const diskUsage = await this.monitoringService.getDiskUsage()
         health.services.disk = {
           status: diskUsage.usage_percentage < 90 ? 'healthy' : 'warning',
           usage_percentage: diskUsage.usage_percentage
@@ -597,7 +599,7 @@ class SystemController {
    */
   async startMonitoring(req, res) {
     try {
-      MonitoringService.startCollection()
+      this.monitoringService.startCollection()
       
       res.json({
         success: true,
@@ -617,7 +619,7 @@ class SystemController {
    */
   async stopMonitoring(req, res) {
     try {
-      MonitoringService.stopCollection()
+      this.monitoringService.stopCollection()
       
       res.json({
         success: true,

@@ -24,7 +24,7 @@ class ApiClient {
 
   constructor() {
     this.client = axios.create({
-      baseURL: '/api',
+      baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
@@ -113,6 +113,8 @@ class ApiClient {
 
   private async request<T = any>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
+
+      
       const response: AxiosResponse<ApiResponse<T>> = await this.client(config)
       return response.data
     } catch (error: any) {
@@ -223,6 +225,12 @@ class ApiClient {
         method: 'GET',
         url: `/shares/${id}/stats`,
       }),
+
+    getEnabledShares: (): Promise<ApiResponse<{ shares: any[] }>> =>
+      this.request({
+        method: 'GET',
+        url: '/shares/enabled',
+      }),
   }
 
   // 文件浏览API
@@ -244,7 +252,7 @@ class ApiClient {
     download: (shareId: number, filePath: string, token?: string): string => {
       const params = new URLSearchParams()
       if (token) params.append('token', token)
-      return `/api/download/${shareId}/${encodeURIComponent(filePath)}?${params.toString()}`
+      return `/api/browse/${shareId}/download${filePath}?${params.toString()}`
     },
 
     getThumbnail: (shareId: number, filePath: string, token?: string): string => {

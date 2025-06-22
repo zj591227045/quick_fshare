@@ -1,0 +1,764 @@
+2025-06-22 13:03:06 [INFO]: SQLite数据库连接成功
+2025-06-22 13:06:30 [INFO]: SQLite数据库连接成功
+2025-06-22 13:06:30 [INFO]: 数据库表结构初始化完成
+2025-06-22 13:06:30 [INFO]: 数据库连接已关闭
+2025-06-22 13:15:31 [ERROR]: 登录过程中发生错误: Cannot read properties of null (reading 'get')
+TypeError: Cannot read properties of null (reading 'get')
+    at /Users/jackson/Documents/Code/Quick_FShare/backend/src/config/database.js:64:15
+    at new Promise (<anonymous>)
+    at DatabaseManager.get (/Users/jackson/Documents/Code/Quick_FShare/backend/src/config/database.js:63:12)
+    at Admin.authenticate (/Users/jackson/Documents/Code/Quick_FShare/backend/src/models/Admin.js:107:43)
+    at /Users/jackson/Documents/Code/Quick_FShare/backend/src/controllers/authController.js:15:31
+    at /Users/jackson/Documents/Code/Quick_FShare/backend/src/middleware/errorHandler.js:229:25
+    at Layer.handle [as handle_request] (/Users/jackson/Documents/Code/Quick_FShare/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/jackson/Documents/Code/Quick_FShare/node_modules/express/lib/router/route.js:149:13)
+    at /Users/jackson/Documents/Code/Quick_FShare/backend/src/utils/validator.js:290:9
+    at Layer.handle [as handle_request] (/Users/jackson/Documents/Code/Quick_FShare/node_modules/express/lib/router/layer.js:95:5)
+2025-06-22 13:15:54 [INFO]: SQLite数据库连接成功
+2025-06-22 13:15:55 [INFO]: SQLite数据库连接成功
+2025-06-22 13:16:16 [INFO]: SQLite数据库连接成功
+2025-06-22 13:16:17 [INFO]: SQLite数据库连接成功
+2025-06-22 13:16:46 [INFO]: SQLite数据库连接成功
+2025-06-22 13:18:33 [INFO]: SQLite数据库连接成功
+2025-06-22 13:18:41 [ERROR]: 登录过程中发生错误: logger.auth is not a function
+TypeError: logger.auth is not a function
+    at /Users/jackson/Documents/Code/Quick_FShare/backend/src/controllers/authController.js:43:12
+2025-06-22 13:19:03 [INFO]: SQLite数据库连接成功
+2025-06-22 13:19:04 [INFO]: SQLite数据库连接成功
+2025-06-22 13:19:21 [INFO]: SQLite数据库连接成功
+2025-06-22 13:19:22 [INFO]: SQLite数据库连接成功
+2025-06-22 13:21:05 [INFO]: SQLite数据库连接成功
+2025-06-22 13:22:25 [INFO]: SQLite数据库连接成功
+2025-06-22 13:22:33 [ERROR]: 登录过程中发生错误: logger.auth is not a function
+TypeError: logger.auth is not a function
+    at /Users/jackson/Documents/Code/Quick_FShare/backend/src/controllers/authController.js:43:12
+2025-06-22 13:22:46 [INFO]: SQLite数据库连接成功
+2025-06-22 13:22:47 [INFO]: SQLite数据库连接成功
+2025-06-22 13:22:54 [INFO]: SQLite数据库连接成功
+2025-06-22 13:22:55 [INFO]: SQLite数据库连接成功
+2025-06-22 13:23:05 [INFO]: SQLite数据库连接成功
+2025-06-22 13:23:06 [INFO]: SQLite数据库连接成功
+2025-06-22 13:23:15 [INFO]: SQLite数据库连接成功
+2025-06-22 13:23:16 [INFO]: SQLite数据库连接成功
+2025-06-22 13:23:29 [INFO]: SQLite数据库连接成功
+2025-06-22 13:23:30 [INFO]: SQLite数据库连接成功
+2025-06-22 13:23:40 [INFO]: SQLite数据库连接成功
+2025-06-22 13:23:50 [INFO]: Auth Event 管理员登录成功 {"username":"admin","ip":"::1"}
+2025-06-22 13:23:50 [ERROR]: 登录过程中发生错误: Converting circular structure to JSON
+    --> starting at object with constructor 'Socket'
+    |     property 'parser' -> object with constructor 'HTTPParser'
+    --- property 'socket' closes the circle
+TypeError: Converting circular structure to JSON
+    --> starting at object with constructor 'Socket'
+    |     property 'parser' -> object with constructor 'HTTPParser'
+    --- property 'socket' closes the circle
+    at JSON.stringify (<anonymous>)
+    at Printf.template (/Users/jackson/Documents/Code/Quick_FShare/backend/src/utils/logger.js:24:29)
+    at Printf.transform (/Users/jackson/Documents/Code/Quick_FShare/node_modules/logform/printf.js:11:26)
+    at Format.transform (/Users/jackson/Documents/Code/Quick_FShare/node_modules/logform/combine.js:20:24)
+    at DerivedLogger._transform (/Users/jackson/Documents/Code/Quick_FShare/node_modules/winston/lib/winston/logger.js:314:29)
+    at Transform._read (/Users/jackson/Documents/Code/Quick_FShare/node_modules/readable-stream/lib/_stream_transform.js:166:10)
+    at Transform._write (/Users/jackson/Documents/Code/Quick_FShare/node_modules/readable-stream/lib/_stream_transform.js:155:83)
+    at doWrite (/Users/jackson/Documents/Code/Quick_FShare/node_modules/readable-stream/lib/_stream_writable.js:390:139)
+    at writeOrBuffer (/Users/jackson/Documents/Code/Quick_FShare/node_modules/readable-stream/lib/_stream_writable.js:381:5)
+    at Writable.write (/Users/jackson/Documents/Code/Quick_FShare/node_modules/readable-stream/lib/_stream_writable.js:302:11)
+2025-06-22 13:23:52 [INFO]: SQLite数据库连接成功
+2025-06-22 13:24:32 [INFO]: SQLite数据库连接成功
+2025-06-22 13:24:33 [INFO]: SQLite数据库连接成功
+2025-06-22 13:24:43 [INFO]: SQLite数据库连接成功
+2025-06-22 13:24:44 [INFO]: SQLite数据库连接成功
+2025-06-22 13:24:54 [INFO]: SQLite数据库连接成功
+2025-06-22 13:25:03 [INFO]: Auth Event 管理员登录成功 {"username":"admin","ip":"::1"}
+2025-06-22 13:25:15 [INFO]: SQLite数据库连接成功
+2025-06-22 13:25:21 [INFO]: SQLite数据库连接成功
+2025-06-22 13:25:37 [INFO]: SQLite数据库连接成功
+2025-06-22 13:27:27 [INFO]: Auth Event 管理员登录成功 {"username":"admin","ip":"::1"}
+2025-06-22 13:33:03 [INFO]: SQLite数据库连接成功
+2025-06-22 13:33:04 [INFO]: SQLite数据库连接成功
+2025-06-22 13:35:23 [INFO]: 分享路径创建成功 {"shareId":{"id":3,"name":"ISO","description":"","path":"/","type":"smb","accessType":"public","hasPassword":false,"enabled":true,"sortOrder":0,"createdAt":"2025-06-22 05:35:23","updatedAt":"2025-06-22 05:35:23","nfsConfig":null},"name":"ISO","type":"smb","user":"admin"}
+2025-06-22 13:35:59 [INFO]: 分享路径删除成功 {"shareId":"1","user":"admin"}
+2025-06-22 13:36:01 [INFO]: 分享路径删除成功 {"shareId":"2","user":"admin"}
+2025-06-22 13:36:44 [INFO]: 分享路径更新成功 {"shareId":"3","user":"admin"}
+2025-06-22 13:44:21 [INFO]: SQLite数据库连接成功
+2025-06-22 13:44:29 [INFO]: SQLite数据库连接成功
+2025-06-22 13:44:30 [INFO]: SQLite数据库连接成功
+2025-06-22 13:44:57 [INFO]: SQLite数据库连接成功
+2025-06-22 13:44:58 [INFO]: SQLite数据库连接成功
+2025-06-22 13:45:26 [INFO]: SQLite数据库连接成功
+2025-06-22 13:45:27 [INFO]: SQLite数据库连接成功
+2025-06-22 13:45:40 [INFO]: SQLite数据库连接成功
+2025-06-22 13:45:41 [INFO]: SQLite数据库连接成功
+2025-06-22 13:46:17 [INFO]: SQLite数据库连接成功
+2025-06-22 13:47:09 [INFO]: 分享路径创建成功 {"shareId":{"id":4,"name":"local","description":"","path":"/","type":"local","accessType":"public","hasPassword":false,"enabled":true,"sortOrder":0,"createdAt":"2025-06-22 05:47:09","updatedAt":"2025-06-22 05:47:09","smbConfig":null,"nfsConfig":null},"name":"local","type":"local","user":"admin"}
+2025-06-22 13:47:58 [INFO]: SQLite数据库连接成功
+2025-06-22 13:47:58 [INFO]: SQLite数据库连接成功
+2025-06-22 13:48:00 [INFO]: SQLite数据库连接成功
+2025-06-22 13:48:00 [INFO]: SQLite数据库连接成功
+2025-06-22 13:54:07 [INFO]: SQLite数据库连接成功
+2025-06-22 13:54:07 [INFO]: SQLite数据库连接成功
+2025-06-22 13:54:07 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:54:07 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:54:07 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:54:07 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:54:08 [INFO]: SQLite数据库连接成功
+2025-06-22 13:54:08 [INFO]: SQLite数据库连接成功
+2025-06-22 13:54:08 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:54:08 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:54:08 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:54:08 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:54:13 [ERROR]: 浏览本地目录失败 {"dirPath":"/","error":"validatePath is not a function"}
+2025-06-22 13:54:13 [ERROR]: 浏览文件失败 {"shareId":"4","path":"/","error":"无法浏览目录: validatePath is not a function"}
+2025-06-22 13:54:13 [ERROR]: 浏览本地目录失败 {"dirPath":"/","error":"validatePath is not a function"}
+2025-06-22 13:54:13 [ERROR]: 浏览文件失败 {"shareId":"4","path":"/","error":"无法浏览目录: validatePath is not a function"}
+2025-06-22 13:55:13 [INFO]: SQLite数据库连接成功
+2025-06-22 13:55:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:55:13 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:55:14 [INFO]: SQLite数据库连接成功
+2025-06-22 13:55:14 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:55:14 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:55:25 [INFO]: SQLite数据库连接成功
+2025-06-22 13:55:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:55:25 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:55:26 [INFO]: SQLite数据库连接成功
+2025-06-22 13:55:26 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:55:26 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:55:36 [INFO]: SQLite数据库连接成功
+2025-06-22 13:55:36 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:55:36 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:55:37 [INFO]: SQLite数据库连接成功
+2025-06-22 13:55:37 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:55:37 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:55:49 [INFO]: SQLite数据库连接成功
+2025-06-22 13:55:49 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:55:49 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:55:50 [INFO]: SQLite数据库连接成功
+2025-06-22 13:55:50 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:55:50 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:56:06 [ERROR]: 获取文件信息失败 {"itemPath":"/.VolumeIcon.icns","error":"ENOENT: no such file or directory, stat '/.VolumeIcon.icns'"}
+2025-06-22 13:56:06 [WARN]: 跳过无法访问的文件 {"item":".VolumeIcon.icns","error":"无法访问文件: ENOENT: no such file or directory, stat '/.VolumeIcon.icns'"}
+2025-06-22 13:56:06 [ERROR]: 获取文件信息失败 {"itemPath":"/.VolumeIcon.icns","error":"ENOENT: no such file or directory, stat '/.VolumeIcon.icns'"}
+2025-06-22 13:56:06 [WARN]: 跳过无法访问的文件 {"item":".VolumeIcon.icns","error":"无法访问文件: ENOENT: no such file or directory, stat '/.VolumeIcon.icns'"}
+2025-06-22 13:56:06 [ERROR]: 浏览文件失败 {"shareId":"4","path":"/","error":"Cannot read properties of undefined (reading 'logAccess')"}
+2025-06-22 13:56:06 [ERROR]: 浏览文件失败 {"shareId":"4","path":"/","error":"Cannot read properties of undefined (reading 'logAccess')"}
+2025-06-22 13:56:52 [INFO]: SQLite数据库连接成功
+2025-06-22 13:56:52 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:56:52 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:56:53 [INFO]: SQLite数据库连接成功
+2025-06-22 13:56:53 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:56:53 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:57:06 [INFO]: SQLite数据库连接成功
+2025-06-22 13:57:06 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:57:06 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:57:07 [INFO]: SQLite数据库连接成功
+2025-06-22 13:57:07 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:57:07 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:57:35 [INFO]: SQLite数据库连接成功
+2025-06-22 13:57:35 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:57:35 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:57:36 [INFO]: SQLite数据库连接成功
+2025-06-22 13:57:36 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:57:36 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:57:52 [INFO]: Auth Event 管理员登录成功 {"username":"admin","ip":"::1"}
+2025-06-22 13:57:58 [INFO]: Auth Event 管理员登录成功 {"username":"admin","ip":"::1"}
+2025-06-22 13:58:07 [INFO]: 分享路径创建成功 {"shareId":{"id":5,"name":"测试本地分享","description":"","path":"/tmp/test_share","type":"local","accessType":"public","hasPassword":false,"enabled":true,"sortOrder":0,"createdAt":"2025-06-22 05:58:07","updatedAt":"2025-06-22 05:58:07","smbConfig":null,"nfsConfig":null},"name":"测试本地分享","type":"local","user":"admin"}
+2025-06-22 13:58:13 [ERROR]: 浏览文件失败 {"shareId":"5","path":"/","error":"fullPath is not defined"}
+2025-06-22 13:58:13 [ERROR]: 浏览文件失败 {"shareId":"5","path":"/","error":"fullPath is not defined"}
+2025-06-22 13:58:22 [ERROR]: 浏览文件失败 {"shareId":"5","path":"/","error":"fullPath is not defined"}
+2025-06-22 13:58:40 [INFO]: SQLite数据库连接成功
+2025-06-22 13:58:40 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:58:40 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:58:41 [INFO]: SQLite数据库连接成功
+2025-06-22 13:58:41 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:58:41 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 13:58:48 [ERROR]: 记录访问日志失败 {"error":"SQLITE_ERROR: table access_logs has no column named created_at"}
+2025-06-22 13:58:58 [ERROR]: 记录访问日志失败 {"error":"SQLITE_ERROR: table access_logs has no column named created_at"}
+2025-06-22 13:58:58 [ERROR]: 记录访问日志失败 {"error":"SQLITE_ERROR: table access_logs has no column named created_at"}
+2025-06-22 14:00:26 [INFO]: 分享路径创建成功 {"shareId":{"id":6,"name":"ISO","description":"","path":"/","type":"smb","accessType":"public","hasPassword":false,"enabled":true,"sortOrder":0,"createdAt":"2025-06-22 06:00:26","updatedAt":"2025-06-22 06:00:26","nfsConfig":null},"name":"ISO","type":"smb","user":"admin"}
+2025-06-22 14:00:31 [ERROR]: 记录访问日志失败 {"error":"SQLITE_ERROR: table access_logs has no column named created_at"}
+2025-06-22 14:00:31 [ERROR]: 记录访问日志失败 {"error":"SQLITE_ERROR: table access_logs has no column named created_at"}
+2025-06-22 14:00:34 [ERROR]: 浏览文件失败 {"shareId":"6","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:00:34 [ERROR]: 浏览文件失败 {"shareId":"6","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:01:24 [INFO]: SQLite数据库连接成功
+2025-06-22 14:01:24 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:01:24 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:01:25 [INFO]: SQLite数据库连接成功
+2025-06-22 14:01:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:01:25 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:01:34 [INFO]: SQLite数据库连接成功
+2025-06-22 14:01:34 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:01:34 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:01:34 [INFO]: SQLite数据库连接成功
+2025-06-22 14:01:34 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:01:34 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:03:26 [INFO]: SQLite数据库连接成功
+2025-06-22 14:03:26 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:03:26 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:03:26 [INFO]: SQLite数据库连接成功
+2025-06-22 14:03:26 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:03:26 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:03:39 [INFO]: SQLite数据库连接成功
+2025-06-22 14:03:39 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:03:39 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:03:40 [INFO]: SQLite数据库连接成功
+2025-06-22 14:03:40 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:03:40 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:03:57 [INFO]: SQLite数据库连接成功
+2025-06-22 14:03:57 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:03:57 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:04:46 [INFO]: 分享路径更新成功 {"shareId":"6","user":"admin"}
+2025-06-22 14:05:03 [ERROR]: 浏览文件失败 {"shareId":"6","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:05:03 [ERROR]: 浏览文件失败 {"shareId":"6","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:05:14 [INFO]: 分享路径删除成功 {"shareId":"6","user":"admin"}
+2025-06-22 14:05:42 [INFO]: 分享路径创建成功 {"shareId":{"id":7,"name":"iso","description":"","path":"/","type":"smb","accessType":"public","hasPassword":false,"enabled":true,"sortOrder":0,"createdAt":"2025-06-22 06:05:42","updatedAt":"2025-06-22 06:05:42","nfsConfig":null},"name":"iso","type":"smb","user":"admin"}
+2025-06-22 14:05:49 [ERROR]: 浏览文件失败 {"shareId":"7","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:05:49 [ERROR]: 浏览文件失败 {"shareId":"7","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:07:13 [INFO]: SQLite数据库连接成功
+2025-06-22 14:07:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:07:13 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:07:14 [INFO]: SQLite数据库连接成功
+2025-06-22 14:07:14 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:07:14 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:07:26 [INFO]: SQLite数据库连接成功
+2025-06-22 14:07:26 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:07:26 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:07:58 [INFO]: 分享路径删除成功 {"shareId":"7","user":"admin"}
+2025-06-22 14:08:26 [INFO]: 分享路径创建成功 {"shareId":{"id":8,"name":"iso","description":"","path":"/","type":"smb","accessType":"public","hasPassword":false,"enabled":true,"sortOrder":0,"createdAt":"2025-06-22 06:08:26","updatedAt":"2025-06-22 06:08:26","nfsConfig":null},"name":"iso","type":"smb","user":"admin"}
+2025-06-22 14:11:02 [INFO]: SQLite数据库连接成功
+2025-06-22 14:11:02 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:11:02 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:11:03 [INFO]: SQLite数据库连接成功
+2025-06-22 14:11:03 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:11:03 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:11:10 [INFO]: SQLite数据库连接成功
+2025-06-22 14:11:10 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:11:10 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:11:11 [INFO]: SQLite数据库连接成功
+2025-06-22 14:11:11 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:11:11 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:11:43 [INFO]: 分享路径删除成功 {"shareId":"8","user":"admin"}
+2025-06-22 14:12:04 [INFO]: 分享路径创建成功 {"shareId":{"id":9,"name":"iso","description":"","path":"/","type":"smb","accessType":"public","hasPassword":false,"enabled":true,"sortOrder":0,"createdAt":"2025-06-22 06:12:04","updatedAt":"2025-06-22 06:12:04","nfsConfig":null},"name":"iso","type":"smb","user":"admin"}
+2025-06-22 14:12:23 [ERROR]: 浏览文件失败 {"shareId":"9","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:12:23 [ERROR]: 浏览文件失败 {"shareId":"9","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:14:35 [INFO]: SQLite数据库连接成功
+2025-06-22 14:14:35 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:14:35 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:14:51 [ERROR]: 浏览文件失败 {"shareId":"9","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:14:51 [ERROR]: 浏览文件失败 {"shareId":"9","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:14:58 [INFO]: 分享路径删除成功 {"shareId":"9","user":"admin"}
+2025-06-22 14:15:20 [INFO]: 分享路径创建成功 {"shareId":{"id":10,"name":"iso","description":"","path":"/","type":"smb","accessType":"public","hasPassword":false,"enabled":true,"sortOrder":0,"createdAt":"2025-06-22 06:15:20","updatedAt":"2025-06-22 06:15:20","nfsConfig":null},"name":"iso","type":"smb","user":"admin"}
+2025-06-22 14:16:47 [INFO]: SQLite数据库连接成功
+2025-06-22 14:16:47 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:16:47 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:17:09 [INFO]: 分享路径删除成功 {"shareId":"10","user":"admin"}
+2025-06-22 14:17:39 [INFO]: 分享路径创建成功 {"shareId":{"id":11,"name":"iso","description":"","path":"/","type":"smb","accessType":"public","hasPassword":false,"enabled":true,"sortOrder":0,"createdAt":"2025-06-22 06:17:39","updatedAt":"2025-06-22 06:17:39","nfsConfig":null},"name":"iso","type":"smb","user":"admin"}
+2025-06-22 14:17:54 [ERROR]: 浏览文件失败 {"shareId":"11","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:17:54 [ERROR]: 浏览文件失败 {"shareId":"11","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:18:35 [INFO]: 分享路径删除成功 {"shareId":"11","user":"admin"}
+2025-06-22 14:19:34 [INFO]: 分享路径创建成功 {"shareId":{"id":12,"name":"iso","description":"","path":"/","type":"smb","accessType":"public","hasPassword":false,"enabled":true,"sortOrder":0,"createdAt":"2025-06-22 06:19:34","updatedAt":"2025-06-22 06:19:34","nfsConfig":null},"name":"iso","type":"smb","user":"admin"}
+2025-06-22 14:20:25 [INFO]: SQLite数据库连接成功
+2025-06-22 14:20:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:20:25 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:20:25 [INFO]: SQLite数据库连接成功
+2025-06-22 14:20:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:20:25 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:20:35 [INFO]: SQLite数据库连接成功
+2025-06-22 14:20:35 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:20:35 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:20:36 [INFO]: SQLite数据库连接成功
+2025-06-22 14:20:36 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:20:36 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:20:47 [INFO]: SQLite数据库连接成功
+2025-06-22 14:20:47 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:20:47 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:20:49 [INFO]: SQLite数据库连接成功
+2025-06-22 14:20:49 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:20:49 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:21:06 [INFO]: 分享路径删除成功 {"shareId":"12","user":"admin"}
+2025-06-22 14:21:35 [INFO]: 分享路径创建成功 {"shareId":{"id":13,"name":"iso","description":"","path":"/","type":"smb","accessType":"public","hasPassword":false,"enabled":true,"sortOrder":0,"createdAt":"2025-06-22 06:21:35","updatedAt":"2025-06-22 06:21:35","nfsConfig":null},"name":"iso","type":"smb","user":"admin"}
+2025-06-22 14:22:39 [INFO]: 分享路径删除成功 {"shareId":"13","user":"admin"}
+2025-06-22 14:22:49 [INFO]: SQLite数据库连接成功
+2025-06-22 14:22:49 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:22:49 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:22:49 [INFO]: SQLite数据库连接成功
+2025-06-22 14:22:49 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:22:49 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:23:12 [INFO]: SQLite数据库连接成功
+2025-06-22 14:23:12 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:23:12 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:23:13 [INFO]: SQLite数据库连接成功
+2025-06-22 14:23:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:23:13 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:23:23 [INFO]: SQLite数据库连接成功
+2025-06-22 14:23:23 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:23:23 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:23:24 [INFO]: SQLite数据库连接成功
+2025-06-22 14:23:24 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:23:24 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:23:33 [INFO]: SQLite数据库连接成功
+2025-06-22 14:23:33 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:23:33 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:23:34 [INFO]: SQLite数据库连接成功
+2025-06-22 14:23:34 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:23:34 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:24:02 [INFO]: 分享路径创建成功 {"shareId":{"id":14,"name":"ISO","description":"","path":"/","type":"smb","accessType":"public","hasPassword":false,"enabled":true,"sortOrder":0,"createdAt":"2025-06-22 06:24:02","updatedAt":"2025-06-22 06:24:02","smbConfig":{"id":1,"shared_path_id":14,"server_ip":"10.255.0.75","port":445,"share_name":"isos","username":"","password":"","domain":"WORKGROUP","workgroup":"WORKGROUP","timeout":30000,"created_at":"2025-06-22 06:24:02","updated_at":"2025-06-22 06:24:02"},"nfsConfig":null},"name":"ISO","type":"smb","user":"admin"}
+2025-06-22 14:24:32 [ERROR]: 浏览SMB目录失败 {"remotePath":"/","error":"SMB2 is not a constructor"}
+2025-06-22 14:24:32 [ERROR]: 浏览文件失败 {"shareId":"14","path":"/","error":"无法浏览SMB目录: SMB2 is not a constructor"}
+2025-06-22 14:24:32 [ERROR]: 浏览SMB目录失败 {"remotePath":"/","error":"SMB2 is not a constructor"}
+2025-06-22 14:24:32 [ERROR]: 浏览文件失败 {"shareId":"14","path":"/","error":"无法浏览SMB目录: SMB2 is not a constructor"}
+2025-06-22 14:24:40 [ERROR]: 浏览SMB目录失败 {"remotePath":"/","error":"SMB2 is not a constructor"}
+2025-06-22 14:24:40 [ERROR]: 浏览文件失败 {"shareId":"14","path":"/","error":"无法浏览SMB目录: SMB2 is not a constructor"}
+2025-06-22 14:24:40 [ERROR]: 浏览SMB目录失败 {"remotePath":"/","error":"SMB2 is not a constructor"}
+2025-06-22 14:24:40 [ERROR]: 浏览文件失败 {"shareId":"14","path":"/","error":"无法浏览SMB目录: SMB2 is not a constructor"}
+2025-06-22 14:24:43 [ERROR]: 浏览SMB目录失败 {"remotePath":"/","error":"SMB2 is not a constructor"}
+2025-06-22 14:24:43 [ERROR]: 浏览文件失败 {"shareId":"14","path":"/","error":"无法浏览SMB目录: SMB2 is not a constructor"}
+2025-06-22 14:24:43 [ERROR]: 浏览SMB目录失败 {"remotePath":"/","error":"SMB2 is not a constructor"}
+2025-06-22 14:24:43 [ERROR]: 浏览文件失败 {"shareId":"14","path":"/","error":"无法浏览SMB目录: SMB2 is not a constructor"}
+2025-06-22 14:25:45 [INFO]: SQLite数据库连接成功
+2025-06-22 14:25:45 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:25:45 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:25:46 [INFO]: SQLite数据库连接成功
+2025-06-22 14:25:46 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:25:46 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:25:55 [ERROR]: 浏览SMB目录失败 {"remotePath":"/","error":"SMB错误: connect EISCONN 10.255.0.75:445 - Local (10.255.0.27:61418)"}
+2025-06-22 14:25:55 [ERROR]: 浏览文件失败 {"shareId":"14","path":"/","error":"无法浏览SMB目录: SMB错误: connect EISCONN 10.255.0.75:445 - Local (10.255.0.27:61418)"}
+2025-06-22 14:25:59 [INFO]: SQLite数据库连接成功
+2025-06-22 14:25:59 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:25:59 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:26:38 [INFO]: SQLite数据库连接成功
+2025-06-22 14:26:38 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:26:38 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:26:39 [INFO]: SQLite数据库连接成功
+2025-06-22 14:26:39 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:26:39 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:26:51 [INFO]: SQLite数据库连接成功
+2025-06-22 14:26:51 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:26:51 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:26:52 [INFO]: SQLite数据库连接成功
+2025-06-22 14:26:52 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:26:52 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:27:02 [INFO]: SQLite数据库连接成功
+2025-06-22 14:27:02 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:27:02 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:27:03 [INFO]: SQLite数据库连接成功
+2025-06-22 14:27:03 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:27:03 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:27:16 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:27:16 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:27:16 [INFO]: SQLite数据库连接成功
+2025-06-22 14:28:06 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:28:06 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:28:06 [INFO]: SQLite数据库连接成功
+2025-06-22 14:28:07 [INFO]: SQLite数据库连接成功
+2025-06-22 14:28:07 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:28:07 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:28:15 [INFO]: SQLite数据库连接成功
+2025-06-22 14:28:15 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:28:15 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:28:16 [INFO]: SQLite数据库连接成功
+2025-06-22 14:28:16 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:28:16 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:28:25 [INFO]: SQLite数据库连接成功
+2025-06-22 14:28:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:28:25 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:28:26 [INFO]: SQLite数据库连接成功
+2025-06-22 14:28:26 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:28:26 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:32:05 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:32:05 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:32:05 [INFO]: SQLite数据库连接成功
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"icons","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"icons","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VeeamRecoveryMedia_10_255_0_78.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VeeamRecoveryMedia_10_255_0_78.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"virtio-win-0.1.229-1.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"virtio-win-0.1.229-1.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"zh-cn_windows_11_business_editions_version_22h2_updated_march_2023_x64_dvd_3523ddc7.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"zh-cn_windows_11_business_editions_version_22h2_updated_march_2023_x64_dvd_3523ddc7.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"zh-cn_windows_10_business_editions_version_21h2_updated_july_2022_x64_dvd_cbcee023.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"zh-cn_windows_10_business_editions_version_21h2_updated_july_2022_x64_dvd_cbcee023.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"Synology-Recovery-Media-2482(3032).iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"Synology-Recovery-Media-2482(3032).iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"Synology Restore Media Win.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"Synology Restore Media Win.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"virtio-win-0.1.229.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"virtio-win-0.1.229.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"CentOS-7-x86_64-Everything-1908.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"CentOS-7-x86_64-Everything-1908.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VeeamBackup&Replication_12.0.0.1420_20230223.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VeeamBackup&Replication_12.0.0.1420_20230223.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"cn_windows_server_2019_updated_march_2019_x64_dvd_c1ffb46c.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"cn_windows_server_2019_updated_march_2019_x64_dvd_c1ffb46c.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"CentOS-7-x86_64-DVD-1804.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"CentOS-7-x86_64-DVD-1804.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VMware-VMvisor-Installer-7.0.0.update03-21313628.x86_64-Dell_Customized-A11.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VMware-VMvisor-Installer-7.0.0.update03-21313628.x86_64-Dell_Customized-A11.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"FirPE-V1.8.2.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"FirPE-V1.8.2.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"CentOS-7-x86_64-DVD-2009.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"CentOS-7-x86_64-DVD-2009.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"ubuntu-22.04.2-live-server-amd64.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"ubuntu-22.04.2-live-server-amd64.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"ubuntu-22.04.2-desktop-amd64.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"ubuntu-22.04.2-desktop-amd64.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"nvidia_m40_23gb.rom","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"nvidia_m40_23gb.rom","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"GM200.rom","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"GM200.rom","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"ubuntu-20.04.6-desktop-amd64.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"ubuntu-20.04.6-desktop-amd64.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"virtio-win-0.1.240-1.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"virtio-win-0.1.240-1.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"iKuai8_x64_3.7.8_Build202311201048.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"iKuai8_x64_3.7.8_Build202311201048.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VeeamBackup-Replication_12.1.0.2131_20231206.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VeeamBackup-Replication_12.1.0.2131_20231206.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VeeamBackup-Replication_12.1.1.56.zip","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VeeamBackup-Replication_12.1.1.56.zip","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VMware-VMvisor-Installer-7.0U3n-21930508.x86_64.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VMware-VMvisor-Installer-7.0U3n-21930508.x86_64.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VMware-VMvisor-Installer-6.5.0-5310538.x86_64-Dell_Customized-A03.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VMware-VMvisor-Installer-6.5.0-5310538.x86_64-Dell_Customized-A03.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VMware-VMvisor-Installer-6.5.0.update03-20502893.x86_64-DellEMC_Customized-A10.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VMware-VMvisor-Installer-6.5.0.update03-20502893.x86_64-DellEMC_Customized-A10.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"EaseUS Todo Backup.zip","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"EaseUS Todo Backup.zip","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"cn_windows_7_ultimate_with_sp1_x64_dvd_u_677408.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"cn_windows_7_ultimate_with_sp1_x64_dvd_u_677408.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"zh-cn_windows_10_business_editions_version_22h2_updated_nov_2023_x64_dvd_5c91e4c2.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"zh-cn_windows_10_business_editions_version_22h2_updated_nov_2023_x64_dvd_5c91e4c2.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"cn_windows_server_2016_updated_feb_2018_x64_dvd_11636703.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"cn_windows_server_2016_updated_feb_2018_x64_dvd_11636703.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"Win11_22H2_Chinese_Simplified_x64v2.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"Win11_22H2_Chinese_Simplified_x64v2.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VMware-VCSA-all-7.0.3-21958406.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"VMware-VCSA-all-7.0.3-21958406.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"SW_DVD9_WIN_ENT_LTSC_2021_64BIT_ChnSimp_MLF_X22-84402.ISO","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"SW_DVD9_WIN_ENT_LTSC_2021_64BIT_ChnSimp_MLF_X22-84402.ISO","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"zh-cn_windows_server_2022_updated_march_2024_x64_dvd_f6700d18.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"zh-cn_windows_server_2022_updated_march_2024_x64_dvd_f6700d18.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"plex-for-kodi-0.7.7-rev3.zip","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"plex-for-kodi-0.7.7-rev3.zip","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"WindowsServer2022_SERVER_EVAL_x64FRE_zh-cn.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"WindowsServer2022_SERVER_EVAL_x64FRE_zh-cn.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"kali-linux-2024.2-installer-amd64.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"kali-linux-2024.2-installer-amd64.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"fnos.0.8.21-419.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"fnos.0.8.21-419.iso","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"NVIDIA.RTX2080Ti.11264.190113.rom","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 关闭SMB连接时出错 {"error":"Cannot read properties of undefined (reading 'FileId')"}
+2025-06-22 14:32:28 [WARN]: 跳过无法访问的SMB文件 {"item":"NVIDIA.RTX2080Ti.11264.190113.rom","error":"stats.isFile is not a function"}
+2025-06-22 14:32:28 [WARN]: 关闭SMB连接时出错 {"error":"Cannot read properties of undefined (reading 'FileId')"}
+2025-06-22 14:33:12 [INFO]: SQLite数据库连接成功
+2025-06-22 14:33:12 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:33:12 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:33:13 [INFO]: SQLite数据库连接成功
+2025-06-22 14:33:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:33:13 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:33:32 [WARN]: 关闭SMB连接时出错 {"error":"Cannot read properties of undefined (reading 'FileId')"}
+2025-06-22 14:33:32 [WARN]: 关闭SMB连接时出错 {"error":"Cannot read properties of undefined (reading 'FileId')"}
+2025-06-22 14:33:32 [WARN]: 关闭SMB连接时出错 {"error":"Cannot read properties of undefined (reading 'FileId')"}
+2025-06-22 14:33:49 [WARN]: 关闭SMB连接时出错 {"error":"Cannot read properties of undefined (reading 'FileId')"}
+2025-06-22 14:34:29 [INFO]: SQLite数据库连接成功
+2025-06-22 14:34:29 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:34:29 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:34:29 [INFO]: SQLite数据库连接成功
+2025-06-22 14:34:29 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:34:29 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:34:40 [INFO]: SQLite数据库连接成功
+2025-06-22 14:34:40 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:34:40 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:34:41 [INFO]: SQLite数据库连接成功
+2025-06-22 14:34:41 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:34:41 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:35:08 [INFO]: SQLite数据库连接成功
+2025-06-22 14:35:08 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:35:08 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:35:09 [INFO]: SQLite数据库连接成功
+2025-06-22 14:35:09 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:35:09 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:35:53 [INFO]: SQLite数据库连接成功
+2025-06-22 14:35:53 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:35:53 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:36:16 [ERROR]: 获取SMB文件信息失败 {"remotePath":"test.txt","error":"无法获取SMB文件信息: STATUS_OBJECT_NAME_NOT_FOUND (0xC0000034) : The object name is not found."}
+2025-06-22 14:36:16 [ERROR]: 下载文件失败 {"shareId":"14","filePath":"test.txt","error":"无法获取SMB文件信息: 无法获取SMB文件信息: STATUS_OBJECT_NAME_NOT_FOUND (0xC0000034) : The object name is not found."}
+2025-06-22 14:36:58 [ERROR]: 获取SMB文件信息失败 {"remotePath":"test.txt","error":"无法获取SMB文件信息: STATUS_OBJECT_NAME_NOT_FOUND (0xC0000034) : The object name is not found."}
+2025-06-22 14:36:58 [ERROR]: 下载文件失败 {"shareId":"14","filePath":"test.txt","error":"无法获取SMB文件信息: 无法获取SMB文件信息: STATUS_OBJECT_NAME_NOT_FOUND (0xC0000034) : The object name is not found."}
+2025-06-22 14:38:25 [INFO]: SQLite数据库连接成功
+2025-06-22 14:38:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:38:25 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:38:25 [INFO]: SQLite数据库连接成功
+2025-06-22 14:38:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:38:25 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:40:05 [ERROR]: SMB读取流错误 {"error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:40:05 [ERROR]: 文件流错误 {"shareId":"14","filePath":"GM200.rom","error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:40:24 [ERROR]: SMB读取流错误 {"error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:40:24 [ERROR]: 文件流错误 {"shareId":"14","filePath":"GM200.rom","error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:40:36 [ERROR]: SMB读取流错误 {"error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:40:36 [ERROR]: 文件流错误 {"shareId":"14","filePath":"GM200.rom","error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:42:49 [INFO]: SQLite数据库连接成功
+2025-06-22 14:42:49 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:42:49 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:42:50 [INFO]: SQLite数据库连接成功
+2025-06-22 14:42:50 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:42:50 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:43:03 [INFO]: SQLite数据库连接成功
+2025-06-22 14:43:03 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:43:03 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:43:04 [INFO]: SQLite数据库连接成功
+2025-06-22 14:43:04 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:43:04 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:43:13 [INFO]: SQLite数据库连接成功
+2025-06-22 14:43:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:43:13 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:43:14 [INFO]: SQLite数据库连接成功
+2025-06-22 14:43:14 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:43:14 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:46:50 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:46:50 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:46:50 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:46:50 [INFO]: SQLite数据库连接成功
+2025-06-22 14:46:50 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:46:50 [INFO]: SQLite数据库连接成功
+2025-06-22 14:46:50 [INFO]: SQLite数据库连接成功
+2025-06-22 14:46:50 [INFO]: SQLite数据库连接成功
+2025-06-22 14:46:50 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:46:50 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:46:50 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:46:50 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:47:10 [INFO]: SQLite数据库连接成功
+2025-06-22 14:47:10 [INFO]: SQLite数据库连接成功
+2025-06-22 14:47:10 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:10 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:47:10 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:10 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:47:11 [INFO]: SQLite数据库连接成功
+2025-06-22 14:47:11 [INFO]: SQLite数据库连接成功
+2025-06-22 14:47:11 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:11 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:47:11 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:11 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:47:20 [INFO]: SQLite数据库连接成功
+2025-06-22 14:47:20 [INFO]: SQLite数据库连接成功
+2025-06-22 14:47:20 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:20 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:47:20 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:20 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:47:21 [INFO]: SQLite数据库连接成功
+2025-06-22 14:47:21 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:21 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:47:21 [INFO]: SQLite数据库连接成功
+2025-06-22 14:47:21 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:21 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:47:28 [INFO]: SQLite数据库连接成功
+2025-06-22 14:47:28 [INFO]: SQLite数据库连接成功
+2025-06-22 14:47:28 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:28 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:47:28 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:28 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:47:29 [INFO]: SQLite数据库连接成功
+2025-06-22 14:47:29 [INFO]: SQLite数据库连接成功
+2025-06-22 14:47:29 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:29 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:47:29 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:29 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:47:42 [INFO]: SQLite数据库连接成功
+2025-06-22 14:47:42 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:42 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:47:43 [INFO]: SQLite数据库连接成功
+2025-06-22 14:47:43 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:43 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:47:56 [INFO]: SQLite数据库连接成功
+2025-06-22 14:47:56 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:56 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:47:57 [INFO]: SQLite数据库连接成功
+2025-06-22 14:47:57 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:57 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:48:05 [INFO]: SQLite数据库连接成功
+2025-06-22 14:48:05 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:48:05 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:48:06 [INFO]: SQLite数据库连接成功
+2025-06-22 14:48:06 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:48:06 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:48:15 [INFO]: SQLite数据库连接成功
+2025-06-22 14:48:15 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:48:15 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:48:16 [INFO]: SQLite数据库连接成功
+2025-06-22 14:48:16 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:48:16 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:48:23 [INFO]: SQLite数据库连接成功
+2025-06-22 14:48:23 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:48:23 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:48:24 [INFO]: SQLite数据库连接成功
+2025-06-22 14:48:24 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:48:24 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:48:25 [INFO]: Auth Event 管理员登录成功 {"username":"admin","ip":"::ffff:127.0.0.1"}
+2025-06-22 14:49:25 [INFO]: SQLite数据库连接成功
+2025-06-22 14:49:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:49:25 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:49:30 [INFO]: SQLite数据库连接成功
+2025-06-22 14:49:30 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:49:30 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:49:31 [INFO]: SQLite数据库连接成功
+2025-06-22 14:49:31 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:49:31 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:49:38 [INFO]: SQLite数据库连接成功
+2025-06-22 14:49:38 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:49:38 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:49:39 [INFO]: SQLite数据库连接成功
+2025-06-22 14:49:39 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:49:39 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:49:46 [INFO]: SQLite数据库连接成功
+2025-06-22 14:49:46 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:49:46 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:49:47 [INFO]: SQLite数据库连接成功
+2025-06-22 14:49:47 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:49:47 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:50:19 [INFO]: SQLite数据库连接成功
+2025-06-22 14:50:19 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:50:19 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:51:07 [ERROR]: SMB读取流错误 {"error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:51:07 [ERROR]: 文件流错误 {"shareId":"14","filePath":"GM200.rom","error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:51:26 [ERROR]: SMB读取流错误 {"error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:51:26 [ERROR]: 文件流错误 {"shareId":"14","filePath":"GM200.rom","error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:51:52 [INFO]: SQLite数据库连接成功
+2025-06-22 14:51:52 [INFO]: SQLite数据库连接成功
+2025-06-22 14:51:52 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:51:52 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:51:52 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:51:52 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:51:53 [INFO]: SQLite数据库连接成功
+2025-06-22 14:51:53 [INFO]: SQLite数据库连接成功
+2025-06-22 14:51:53 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:51:53 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:51:53 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:51:53 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:52:02 [INFO]: SQLite数据库连接成功
+2025-06-22 14:52:02 [INFO]: SQLite数据库连接成功
+2025-06-22 14:52:02 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:02 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:52:02 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:02 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:52:03 [INFO]: SQLite数据库连接成功
+2025-06-22 14:52:03 [INFO]: SQLite数据库连接成功
+2025-06-22 14:52:03 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:03 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:52:03 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:03 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:52:15 [INFO]: SQLite数据库连接成功
+2025-06-22 14:52:15 [INFO]: SQLite数据库连接成功
+2025-06-22 14:52:15 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:15 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:52:15 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:15 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:52:16 [INFO]: SQLite数据库连接成功
+2025-06-22 14:52:16 [INFO]: SQLite数据库连接成功
+2025-06-22 14:52:16 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:16 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:52:16 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:16 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:52:24 [INFO]: SQLite数据库连接成功
+2025-06-22 14:52:24 [INFO]: SQLite数据库连接成功
+2025-06-22 14:52:24 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:24 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:52:24 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:24 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:52:25 [INFO]: SQLite数据库连接成功
+2025-06-22 14:52:25 [INFO]: SQLite数据库连接成功
+2025-06-22 14:52:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:25 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:52:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:25 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:52:37 [INFO]: SQLite数据库连接成功
+2025-06-22 14:52:37 [INFO]: SQLite数据库连接成功
+2025-06-22 14:52:37 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:37 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:52:37 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:37 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:52:38 [INFO]: SQLite数据库连接成功
+2025-06-22 14:52:38 [INFO]: SQLite数据库连接成功
+2025-06-22 14:52:38 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:38 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 14:52:38 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:38 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 15:00:23 [INFO]: SQLite数据库连接成功
+2025-06-22 15:00:23 [INFO]: SQLite数据库连接成功
+2025-06-22 15:00:23 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:00:23 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 15:00:23 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:00:23 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 15:00:24 [INFO]: SQLite数据库连接成功
+2025-06-22 15:00:24 [INFO]: SQLite数据库连接成功
+2025-06-22 15:00:24 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:00:24 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 15:00:24 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:00:24 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 15:01:38 [INFO]: SQLite数据库连接成功
+2025-06-22 15:01:38 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:01:38 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 15:01:38 [INFO]: SQLite数据库连接成功
+2025-06-22 15:01:38 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:01:38 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 15:01:39 [INFO]: SQLite数据库连接成功
+2025-06-22 15:01:39 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:01:39 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 15:01:39 [INFO]: SQLite数据库连接成功
+2025-06-22 15:01:39 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:01:39 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 15:01:50 [INFO]: SQLite数据库连接成功
+2025-06-22 15:01:50 [INFO]: SQLite数据库连接成功
+2025-06-22 15:01:50 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:01:50 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 15:01:50 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:01:50 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 15:01:51 [INFO]: SQLite数据库连接成功
+2025-06-22 15:01:51 [INFO]: SQLite数据库连接成功
+2025-06-22 15:01:51 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:01:51 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 15:01:51 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:01:51 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 15:02:13 [INFO]: SQLite数据库连接成功
+2025-06-22 15:02:13 [INFO]: SQLite数据库连接成功
+2025-06-22 15:02:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:02:13 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 15:02:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:02:13 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 15:02:13 [INFO]: SQLite数据库连接成功
+2025-06-22 15:02:13 [INFO]: SQLite数据库连接成功
+2025-06-22 15:02:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:02:13 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 15:02:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:02:13 [INFO]: 缩略图服务初始化成功 {"cacheDir":"/Users/jackson/Documents/Code/Quick_FShare/backend/data/thumbnails"}
+2025-06-22 15:02:25 [INFO]: 开始SMB目录浏览 {"remotePath":"/","fileCount":"unknown"}
+2025-06-22 15:02:26 [INFO]: SMB readdir完成 {"remotePath":"/","fileCount":40,"duration":76}
+2025-06-22 15:02:26 [INFO]: SMB批量stat完成 {"remotePath":"/","fileCount":40,"duration":17}
+2025-06-22 15:02:26 [INFO]: SMB目录浏览完成 {"remotePath":"/","totalFiles":40,"totalDuration":105}
+2025-06-22 15:18:34 [INFO]: 开始SMB目录浏览 {"remotePath":"/","fileCount":"unknown"}
+2025-06-22 15:18:34 [INFO]: 开始SMB目录浏览 {"remotePath":"/","fileCount":"unknown"}
+2025-06-22 15:18:34 [INFO]: SMB readdir完成 {"remotePath":"/","fileCount":40,"duration":46}
+2025-06-22 15:18:34 [INFO]: SMB readdir完成 {"remotePath":"/","fileCount":40,"duration":56}
+2025-06-22 15:18:34 [INFO]: SMB批量stat完成 {"remotePath":"/","fileCount":40,"duration":30}
+2025-06-22 15:18:34 [INFO]: SMB目录浏览完成 {"remotePath":"/","totalFiles":40,"totalDuration":83}
+2025-06-22 15:18:34 [INFO]: SMB批量stat完成 {"remotePath":"/","fileCount":40,"duration":27}
+2025-06-22 15:18:34 [INFO]: SMB目录浏览完成 {"remotePath":"/","totalFiles":40,"totalDuration":92}
+2025-06-22 15:19:01 [INFO]: 开始SMB目录浏览 {"remotePath":"/","fileCount":"unknown"}
+2025-06-22 15:19:01 [INFO]: SMB readdir完成 {"remotePath":"/","fileCount":40,"duration":102}
+2025-06-22 15:19:01 [INFO]: SMB批量stat完成 {"remotePath":"/","fileCount":40,"duration":23}
+2025-06-22 15:19:01 [INFO]: SMB目录浏览完成 {"remotePath":"/","totalFiles":33,"totalDuration":128}
+2025-06-22 15:19:03 [INFO]: 开始SMB目录浏览 {"remotePath":"/","fileCount":"unknown"}
+2025-06-22 15:19:03 [INFO]: SMB readdir完成 {"remotePath":"/","fileCount":40,"duration":68}
+2025-06-22 15:19:03 [INFO]: SMB批量stat完成 {"remotePath":"/","fileCount":40,"duration":30}
+2025-06-22 15:19:03 [INFO]: SMB目录浏览完成 {"remotePath":"/","totalFiles":2,"totalDuration":100}
+2025-06-22 15:19:03 [INFO]: 开始SMB目录浏览 {"remotePath":"/","fileCount":"unknown"}
+2025-06-22 15:19:03 [INFO]: SMB readdir完成 {"remotePath":"/","fileCount":40,"duration":76}
+2025-06-22 15:19:03 [INFO]: SMB批量stat完成 {"remotePath":"/","fileCount":40,"duration":22}
+2025-06-22 15:19:03 [INFO]: SMB目录浏览完成 {"remotePath":"/","totalFiles":2,"totalDuration":105}
+2025-06-22 15:19:29 [INFO]: 开始SMB目录浏览 {"remotePath":"/","fileCount":"unknown"}
+2025-06-22 15:19:29 [INFO]: 开始SMB目录浏览 {"remotePath":"/","fileCount":"unknown"}
+2025-06-22 15:19:29 [INFO]: SMB readdir完成 {"remotePath":"/","fileCount":40,"duration":73}
+2025-06-22 15:19:29 [INFO]: SMB批量stat完成 {"remotePath":"/","fileCount":40,"duration":19}
+2025-06-22 15:19:29 [INFO]: SMB目录浏览完成 {"remotePath":"/","totalFiles":40,"totalDuration":100}
+2025-06-22 15:19:29 [INFO]: SMB readdir完成 {"remotePath":"/","fileCount":40,"duration":58}
+2025-06-22 15:19:29 [INFO]: SMB批量stat完成 {"remotePath":"/","fileCount":40,"duration":25}
+2025-06-22 15:19:29 [INFO]: SMB目录浏览完成 {"remotePath":"/","totalFiles":40,"totalDuration":86}
+2025-06-22 15:19:39 [ERROR]: SMB读取流错误 {"error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 15:19:39 [ERROR]: 文件流错误 {"shareId":"14","filePath":"GM200.rom","error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}

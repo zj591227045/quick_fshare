@@ -44,6 +44,7 @@ const config = {
     maxSize: process.env.LOG_MAX_SIZE || '10m',
     maxFiles: parseInt(process.env.LOG_MAX_FILES) || 10,
     datePattern: process.env.LOG_DATE_PATTERN || 'YYYY-MM-DD',
+    enableConsole: process.env.NODE_ENV === 'development',
   },
 
   // 安全配置

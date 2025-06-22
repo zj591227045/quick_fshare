@@ -93,7 +93,35 @@ const shareSchemas = {
             otherwise: Joi.string().allow(null, '')
         }),
         enabled: Joi.boolean().default(true),
-        sort_order: Joi.number().integer().min(0).default(0)
+        sort_order: Joi.number().integer().min(0).default(0),
+        // 添加SMB配置支持
+        smb_config: Joi.when('type', {
+            is: 'smb',
+            then: Joi.object({
+                server_ip: commonSchemas.ip.required(),
+                port: Joi.number().integer().min(1).max(65535).default(445),
+                share_name: Joi.string().min(1).max(100).required(),
+                username: Joi.string().max(50).allow(''),
+                password: Joi.string().max(255).allow(''),
+                domain: Joi.string().max(50).default('WORKGROUP'),
+                workgroup: Joi.string().max(50).default('WORKGROUP'),
+                timeout: Joi.number().integer().min(1000).max(300000).default(30000)
+            }),
+            otherwise: Joi.forbidden()
+        }),
+        // 添加NFS配置支持
+        nfs_config: Joi.when('type', {
+            is: 'nfs',
+            then: Joi.object({
+                server_ip: commonSchemas.ip.required(),
+                export_path: Joi.string().min(1).max(500).required(),
+                mount_point: Joi.string().max(500).allow(''),
+                mount_options: Joi.string().max(200).default('ro,soft,intr'),
+                nfs_version: Joi.string().valid('v2', 'v3', 'v4', 'v4.1', 'v4.2').default('v3'),
+                timeout: Joi.number().integer().min(1000).max(300000).default(30000)
+            }),
+            otherwise: Joi.forbidden()
+        })
     }),
 
     // 更新分享路径
@@ -118,13 +146,52 @@ const shareSchemas = {
             otherwise: Joi.string().allow(null, '')
         }),
         enabled: Joi.boolean(),
-        sort_order: Joi.number().integer().min(0)
+        sort_order: Joi.number().integer().min(0),
+        // 添加SMB配置支持
+        smb_config: Joi.when('type', {
+            is: 'smb',
+            then: Joi.object({
+                server_ip: commonSchemas.ip,
+                port: Joi.number().integer().min(1).max(65535),
+                share_name: Joi.string().min(1).max(100),
+                username: Joi.string().max(50).allow(''),
+                password: Joi.string().max(255).allow(''),
+                domain: Joi.string().max(50),
+                workgroup: Joi.string().max(50),
+                timeout: Joi.number().integer().min(1000).max(300000)
+            }),
+            otherwise: Joi.forbidden()
+        }),
+        // 添加NFS配置支持
+        nfs_config: Joi.when('type', {
+            is: 'nfs',
+            then: Joi.object({
+                server_ip: commonSchemas.ip,
+                export_path: Joi.string().min(1).max(500),
+                mount_point: Joi.string().max(500).allow(''),
+                mount_options: Joi.string().max(200),
+                nfs_version: Joi.string().valid('v2', 'v3', 'v4', 'v4.1', 'v4.2'),
+                timeout: Joi.number().integer().min(1000).max(300000)
+            }),
+            otherwise: Joi.forbidden()
+        })
     }),
 
     // 密码验证
     verifyPassword: Joi.object({
         shareId: commonSchemas.id.required(),
         password: Joi.string().required()
+    }),
+
+    // 列表查询
+    list: Joi.object({
+        page: commonSchemas.page,
+        limit: commonSchemas.limit,
+        type: Joi.string().valid('local', 'smb', 'nfs').allow(''),
+        enabled: Joi.boolean(),
+        search: commonSchemas.search,
+        sortBy: Joi.string().valid('name', 'type', 'created_at', 'sort_order').default('sort_order'),
+        sortOrder: commonSchemas.sort
     }),
 
     // ID验证
@@ -219,6 +286,28 @@ const fileSchemas = {
         shareId: commonSchemas.id.required(),
         path: Joi.string().required(),
         size: Joi.number().integer().min(50).max(500).default(200)
+    })
+};
+
+// 浏览相关验证模式
+const browseSchemas = {
+    list: Joi.object({
+        path: Joi.string().allow('').default('/'),
+        sort: Joi.string().valid('name', 'type', 'size', 'modified').default('name'),
+        order: Joi.string().valid('asc', 'desc').default('asc'),
+        search: Joi.string().allow('').max(100),
+        limit: Joi.number().integer().min(1).max(100),
+        offset: Joi.number().integer().min(0).default(0)
+    }),
+
+    verifyPassword: Joi.object({
+        share_id: commonSchemas.id.required(),
+        password: Joi.string().required()
+    }),
+
+    search: Joi.object({
+        q: Joi.string().min(1).max(100).required(),
+        token: Joi.string().allow('')
     })
 };
 
@@ -383,6 +472,53 @@ function sanitizeInput(input) {
     return input;
 }
 
+/**
+ * 简化的验证请求函数
+ */
+function validateRequest(schemaPath) {
+    return (req, res, next) => {
+        const schemas = module.exports.schemas;
+        const [category, schemaName] = schemaPath.split('.');
+        
+        const schema = schemas[category] && schemas[category][schemaName];
+        if (!schema) {
+            return res.status(500).json({
+                success: false,
+                message: `验证模式未找到: ${schemaPath}`
+            });
+        }
+
+        // 合并params和query作为验证数据
+        const data = { ...req.params, ...req.query };
+        
+        const { error, value } = schema.validate(data, {
+            abortEarly: false,
+            stripUnknown: true,
+            convert: true
+        });
+
+        if (error) {
+            const errorMessage = error.details.map(detail => ({
+                field: detail.path.join('.'),
+                message: detail.message,
+                value: detail.context?.value
+            }));
+
+            return res.status(400).json({
+                success: false,
+                message: '数据验证失败',
+                errors: errorMessage
+            });
+        }
+
+        // 将验证后的数据写回请求对象
+        Object.assign(req.params, value);
+        Object.assign(req.query, value);
+
+        next();
+    };
+}
+
 // 导出验证模式和函数
 module.exports = {
     // 验证模式
@@ -392,6 +528,7 @@ module.exports = {
         smb: smbSchemas,
         nfs: nfsSchemas,
         file: fileSchemas,
+        browse: browseSchemas,
         system: systemSchemas,
         common: commonSchemas
     },
@@ -409,5 +546,6 @@ module.exports = {
     validatePasswordStrength,
     validateIPAddress,
     sanitizeInput,
-    createValidator
+    createValidator,
+    validateRequest
 }; 

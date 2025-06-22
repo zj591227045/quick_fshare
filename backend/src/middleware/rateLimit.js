@@ -1,7 +1,15 @@
 const rateLimit = require('express-rate-limit');
 const config = require('../config/server');
 const logger = require('../utils/logger');
-const { getClientIdentifier, logSecurityEvent } = require('./auth');
+const { logSecurity: logSecurityEvent } = require('../utils/logger');
+
+/**
+ * 获取客户端标识符
+ */
+function getClientIdentifier(req) {
+  // 使用IP地址作为客户端标识符
+  return req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown';
+}
 
 /**
  * 创建基础速率限制器
@@ -17,7 +25,7 @@ function createRateLimiter(options = {}) {
     skipFailedRequests = false,
   } = options;
 
-  return rateLimit({
+  const limiter = rateLimit({
     windowMs,
     max,
     message: {
@@ -30,7 +38,9 @@ function createRateLimiter(options = {}) {
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: keyGenerator || ((req) => getClientIdentifier(req)),
-    onLimitReached: (req, res, options) => {
+    skipSuccessfulRequests,
+    skipFailedRequests,
+    handler: (req, res) => {
       logger.warn('频率限制触发', {
         ip: req.ip,
         user: req.user ? req.user.username : null,
@@ -46,12 +56,20 @@ function createRateLimiter(options = {}) {
       });
 
       if (onLimitReached) {
-        onLimitReached(req, res, options);
+        onLimitReached(req, res);
       }
+
+      res.status(429).json({
+        success: false,
+        error: {
+          code: 'RATE_LIMIT_EXCEEDED',
+          message,
+        },
+      });
     },
-    skipSuccessfulRequests,
-    skipFailedRequests,
   });
+
+  return limiter;
 }
 
 /**

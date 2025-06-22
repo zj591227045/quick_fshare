@@ -3,8 +3,9 @@ const path = require('path')
 const { createReadStream, createWriteStream } = require('fs')
 const { pipeline } = require('stream')
 const { promisify } = require('util')
+const SMB2 = require('@marsaud/smb2')
 const logger = require('../utils/logger')
-const { validatePath } = require('../utils/validator')
+const Share = require('../models/Share')
 
 const pipelineAsync = promisify(pipeline)
 
@@ -13,6 +14,304 @@ class FileSystemService {
     this.supportedImageTypes = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg']
     this.supportedVideoTypes = ['.mp4', '.avi', '.mkv', '.mov', '.wmv', '.flv', '.webm']
     this.supportedDocTypes = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt']
+  }
+
+  /**
+   * 验证路径安全性
+   */
+  validatePath(filePath) {
+    if (!filePath || typeof filePath !== 'string') {
+      return false
+    }
+    
+    // 检查路径遍历攻击
+    if (filePath.includes('..') || filePath.includes('~')) {
+      return false
+    }
+    
+    return true
+  }
+
+  /**
+   * 获取SMB客户端连接
+   */
+  async getSMBClient(smbConfig) {
+    // 每次都创建新的连接，避免连接冲突
+    const smb2Client = new SMB2({
+      share: `\\\\${smbConfig.server_ip}\\${smbConfig.share_name}`,
+      domain: smbConfig.domain || 'WORKGROUP',
+      username: smbConfig.username || 'guest',
+      password: smbConfig.password || '',
+      port: smbConfig.port || 445,
+      timeout: smbConfig.timeout || 30000,
+      autoCloseTimeout: 5000 // 5秒后自动关闭连接
+    })
+
+    return smb2Client
+  }
+
+  /**
+   * 浏览SMB目录
+   */
+  async browseSMBDirectory(smbConfig, remotePath, options = {}) {
+    const { sort = 'name', order = 'asc', search = '', limit, offset } = options
+    const startTime = Date.now()
+
+    try {
+      logger.info('开始SMB目录浏览', { remotePath, fileCount: 'unknown' })
+      
+      const smb2Client = await this.getSMBClient(smbConfig)
+      const actualPath = remotePath === '/' ? '' : remotePath
+
+      // 读取目录内容
+      const readdirStart = Date.now()
+      const items = await new Promise((resolve, reject) => {
+        smb2Client.readdir(actualPath, (err, files) => {
+          if (err) {
+            reject(new Error(`SMB错误: ${err.message}`))
+          } else {
+            resolve(files || [])
+          }
+        })
+      })
+      
+      logger.info('SMB readdir完成', { 
+        remotePath, 
+        fileCount: items.length, 
+        duration: Date.now() - readdirStart 
+      })
+
+      const fileInfos = []
+
+      // 批量并发获取文件信息 - 提高SMB性能
+      const statPromises = items.map(async (item) => {
+        try {
+          const itemPath = actualPath ? `${actualPath}/${item}` : item
+          
+          // 并发获取文件统计信息
+          const stats = await new Promise((resolve, reject) => {
+            smb2Client.stat(itemPath, (err, stat) => {
+              if (err) {
+                // 对于无法访问的文件，返回基本信息
+                logger.debug('无法获取SMB文件stat，使用默认信息', { item, error: err.message })
+                resolve({
+                  isDirectory: () => false,
+                  size: 0,
+                  mtime: new Date()
+                })
+              } else {
+                resolve(stat)
+              }
+            })
+          })
+
+          // 检查文件类型 - @marsaud/smb2库的stat对象结构不同
+          const isDirectory = stats.isDirectory ? stats.isDirectory() : (stats.mode && (stats.mode & 0o040000) !== 0)
+          const isFile = !isDirectory
+
+          const info = {
+            name: item,
+            path: `/${itemPath}`,
+            type: isDirectory ? 'directory' : 'file',
+            size: stats.size || 0,
+            modified: stats.mtime ? stats.mtime.toISOString() : new Date().toISOString(),
+            extension: isFile ? path.extname(item).toLowerCase() : undefined,
+            mime_type: isFile ? this.getMimeType(path.extname(item).toLowerCase()) : undefined,
+            has_thumbnail: isFile ? this.supportsThumbnail(path.extname(item).toLowerCase()) : false,
+            is_readable: isFile,
+            permissions: {
+              read: true,
+              write: false,
+              execute: false
+            }
+          }
+
+          // 搜索过滤
+          if (search && !info.name.toLowerCase().includes(search.toLowerCase())) {
+            return null
+          }
+
+          return info
+        } catch (error) {
+          logger.warn('跳过无法访问的SMB文件', { item, error: error.message })
+          return null
+        }
+      })
+      
+      // 等待所有stat操作完成 - 并发执行提高性能
+      const statStart = Date.now()
+      const results = await Promise.all(statPromises)
+      
+      logger.info('SMB批量stat完成', { 
+        remotePath, 
+        fileCount: items.length, 
+        duration: Date.now() - statStart 
+      })
+      
+      // 过滤掉null结果并添加到fileInfos
+      results.forEach(info => {
+        if (info) {
+          fileInfos.push(info)
+        }
+      })
+
+      // 排序
+      this.sortFiles(fileInfos, sort, order)
+
+      // 分页
+      const total = fileInfos.length
+      let paginatedFiles = fileInfos
+      if (limit) {
+        const startIndex = offset || 0
+        paginatedFiles = fileInfos.slice(startIndex, startIndex + limit)
+      }
+
+      // 获取父级目录路径
+      const parentPath = remotePath === '/' ? null : path.dirname(remotePath)
+
+      const result = {
+        current_path: remotePath,
+        parent_path: parentPath,
+        files: paginatedFiles,
+        total,
+        pagination: limit ? {
+          limit,
+          offset: offset || 0,
+          total,
+          has_more: (offset || 0) + limit < total
+        } : null
+      }
+
+      // 主动关闭SMB连接
+      this.closeSMBConnection(smb2Client)
+
+      logger.info('SMB目录浏览完成', { 
+        remotePath, 
+        totalFiles: result.total, 
+        totalDuration: Date.now() - startTime 
+      })
+
+      return result
+    } catch (error) {
+      // 发生错误时也尝试关闭连接
+      this.closeSMBConnection(smb2Client)
+      
+      logger.error('浏览SMB目录失败', { remotePath, error: error.message })
+      throw new Error(`无法浏览SMB目录: ${error.message}`)
+    }
+  }
+
+  /**
+   * 创建SMB文件读取流
+   */
+  async createSMBReadStream(smbConfig, remotePath, options = {}) {
+    try {
+      const smb2Client = await this.getSMBClient(smbConfig)
+      const actualPath = remotePath.startsWith('/') ? remotePath.substring(1) : remotePath
+
+      return new Promise((resolve, reject) => {
+        smb2Client.createReadStream(actualPath, (err, readStream) => {
+          if (err) {
+            // 立即关闭连接
+            this.closeSMBConnection(smb2Client)
+            reject(new Error(`无法创建SMB读取流: ${err.message}`))
+          } else {
+            // 添加连接引用到流对象，以便在适当时候关闭
+            readStream._smbClient = smb2Client
+            
+            // 监听流事件
+            let streamClosed = false
+            
+            const closeConnection = () => {
+              if (!streamClosed) {
+                streamClosed = true
+                // 延迟关闭连接，确保流操作完成
+                setTimeout(() => {
+                  this.closeSMBConnection(smb2Client)
+                }, 1000)
+              }
+            }
+
+            readStream.on('end', closeConnection)
+            readStream.on('close', closeConnection)
+            readStream.on('error', (streamError) => {
+              logger.error('SMB读取流错误', { error: streamError.message })
+              closeConnection()
+            })
+
+            resolve(readStream)
+          }
+        })
+      })
+    } catch (error) {
+      logger.error('创建SMB读取流失败', { remotePath, error: error.message })
+      throw new Error(`无法创建SMB读取流: ${error.message}`)
+    }
+  }
+
+  /**
+   * 安全关闭SMB连接
+   */
+  closeSMBConnection(smb2Client) {
+    if (!smb2Client) return
+    
+    try {
+      if (typeof smb2Client.close === 'function') {
+        smb2Client.close()
+      }
+    } catch (closeError) {
+      // 忽略关闭错误，这是正常的
+      logger.debug('SMB连接关闭', { error: closeError.message })
+    }
+  }
+
+  /**
+   * 获取SMB文件信息
+   */
+  async getSMBFileInfo(smbConfig, remotePath) {
+    try {
+      const smb2Client = await this.getSMBClient(smbConfig)
+      const actualPath = remotePath.startsWith('/') ? remotePath.substring(1) : remotePath
+
+      const stats = await new Promise((resolve, reject) => {
+        smb2Client.stat(actualPath, (err, stat) => {
+          if (err) {
+            reject(new Error(`无法获取SMB文件信息: ${err.message}`))
+          } else {
+            resolve(stat)
+          }
+        })
+      })
+
+      // 检查文件类型
+      const isDirectory = stats.isDirectory ? stats.isDirectory() : (stats.mode && (stats.mode & 0o040000) !== 0)
+      const isFile = !isDirectory
+
+      const result = {
+        name: path.basename(remotePath),
+        path: remotePath,
+        type: isDirectory ? 'directory' : 'file',
+        size: stats.size || 0,
+        modified: stats.mtime ? stats.mtime.toISOString() : new Date().toISOString(),
+        extension: isFile ? path.extname(remotePath).toLowerCase() : undefined,
+        mime_type: isFile ? this.getMimeType(path.extname(remotePath).toLowerCase()) : undefined,
+        has_thumbnail: isFile ? this.supportsThumbnail(path.extname(remotePath).toLowerCase()) : false,
+        is_readable: isFile,
+        permissions: {
+          read: true,
+          write: false,
+          execute: false
+        }
+      }
+
+      // 主动关闭SMB连接
+      this.closeSMBConnection(smb2Client)
+
+      return result
+    } catch (error) {
+      logger.error('获取SMB文件信息失败', { remotePath, error: error.message })
+      throw new Error(`无法获取SMB文件信息: ${error.message}`)
+    }
   }
 
   /**
@@ -46,14 +345,57 @@ class FileSystemService {
   }
 
   /**
-   * 浏览目录内容
+   * 浏览目录内容（根据分享类型自动选择方式）
    */
-  async browseDirectory(dirPath, options = {}) {
+  async browseDirectory(shareOrPath, options = {}, shareId = null) {
+    // 如果传入的是路径字符串，使用本地文件系统（向后兼容）
+    if (typeof shareOrPath === 'string') {
+      return this.browseLocalDirectory(shareOrPath, options)
+    }
+
+    // 如果传入的是分享对象或分享ID，根据类型选择浏览方式
+    let share = shareOrPath
+    if (typeof shareOrPath === 'number') {
+      share = await Share.findById(shareOrPath)
+      if (!share) {
+        throw new Error('分享不存在')
+      }
+    }
+
+    const { requestPath = '/' } = options
+
+    switch (share.type) {
+      case 'local':
+        const fullPath = requestPath === '/' ? share.path : path.join(share.path, requestPath)
+        return this.browseLocalDirectory(fullPath, options)
+      
+      case 'smb':
+        if (!share.smbConfig) {
+          throw new Error('SMB配置不存在')
+        }
+        return this.browseSMBDirectory(share.smbConfig, requestPath, options)
+      
+      case 'nfs':
+        if (!share.nfsConfig) {
+          throw new Error('NFS配置不存在')
+        }
+        // TODO: 实现NFS浏览
+        throw new Error('NFS浏览暂未实现')
+      
+      default:
+        throw new Error(`不支持的分享类型: ${share.type}`)
+    }
+  }
+
+  /**
+   * 浏览本地目录内容
+   */
+  async browseLocalDirectory(dirPath, options = {}) {
     const { sort = 'name', order = 'asc', search = '', limit, offset } = options
 
     try {
       // 验证路径安全性
-      if (!validatePath(dirPath)) {
+      if (!this.validatePath(dirPath)) {
         throw new Error('无效的路径')
       }
 
@@ -114,7 +456,7 @@ class FileSystemService {
         } : null
       }
     } catch (error) {
-      logger.error('浏览目录失败', { dirPath, error: error.message })
+      logger.error('浏览本地目录失败', { dirPath, error: error.message })
       throw new Error(`无法浏览目录: ${error.message}`)
     }
   }
@@ -184,7 +526,7 @@ class FileSystemService {
   createReadStream(filePath, options = {}) {
     try {
       // 验证路径安全性
-      if (!validatePath(filePath)) {
+      if (!this.validatePath(filePath)) {
         throw new Error('无效的文件路径')
       }
 
@@ -373,4 +715,4 @@ class FileSystemService {
   }
 }
 
-module.exports = new FileSystemService() 
+module.exports = FileSystemService 

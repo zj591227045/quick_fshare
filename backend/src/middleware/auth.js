@@ -422,6 +422,7 @@ module.exports = {
     
     // 认证中间件
     authenticateAdmin,
+    requireAuth: authenticateAdmin, // 别名
     optionalAuthenticateAdmin,
     authenticateShare,
     refreshToken,

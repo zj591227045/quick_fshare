@@ -25,13 +25,17 @@ export interface LoginResponse {
 export interface SharePath {
   id: number
   name: string
+  description?: string
   path: string
   type: 'local' | 'smb' | 'nfs'
-  access_type: 'public' | 'password'
-  password?: string
+  accessType: 'public' | 'password'
+  hasPassword?: boolean
   enabled: boolean
-  created_at: string
-  updated_at: string
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+  smbConfig?: any
+  nfsConfig?: any
 }
 
 export interface CreateShareRequest {

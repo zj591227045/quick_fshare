@@ -4,7 +4,7 @@ const path = require('path')
 const { exec } = require('child_process')
 const { promisify } = require('util')
 const logger = require('../utils/logger')
-const DatabaseManager = require('../config/database')
+const dbManager = require('../config/database')
 
 const execAsync = promisify(exec)
 
@@ -18,7 +18,7 @@ class ThumbnailService {
       medium: { width: 300, height: 300 },
       large: { width: 600, height: 600 }
     }
-    this.db = new DatabaseManager()
+    this.db = dbManager
     
     this.init()
   }
@@ -28,8 +28,7 @@ class ThumbnailService {
       // 确保缩略图目录存在
       await fs.mkdir(this.cacheDir, { recursive: true })
       
-      // 初始化数据库连接
-      await this.db.connect()
+      // 数据库连接已在主程序中建立，这里无需重复连接
       
       // 加载缓存数据
       await this.loadCache()
@@ -500,4 +499,4 @@ class ThumbnailService {
   }
 }
 
-module.exports = new ThumbnailService() 
+module.exports = ThumbnailService 

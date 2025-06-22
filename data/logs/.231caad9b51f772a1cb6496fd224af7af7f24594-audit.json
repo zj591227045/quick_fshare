@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": false,
+        "amount": 10
+    },
+    "auditLog": "/Users/jackson/Documents/Code/Quick_FShare/data/logs/.231caad9b51f772a1cb6496fd224af7af7f24594-audit.json",
+    "files": [
+        {
+            "date": 1750568562478,
+            "name": "/Users/jackson/Documents/Code/Quick_FShare/data/logs/access-2025-06-22.log",
+            "hash": "52d5c1b39a21f8a0a5935ce750aa7879435eba07d6c72655a22f767dfe588091"
+        }
+    ],
+    "hashType": "sha256"
+}

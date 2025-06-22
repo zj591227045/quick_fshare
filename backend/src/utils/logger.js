@@ -5,7 +5,7 @@ const fs = require('fs');
 const config = require('../config/server');
 
 // 确保日志目录存在
-const logDir = path.resolve(config.logging.filePath);
+const logDir = path.resolve(config.logging.path);
 if (!fs.existsSync(logDir)) {
     fs.mkdirSync(logDir, { recursive: true });
 }
@@ -21,7 +21,22 @@ const logFormat = winston.format.combine(
         let log = `${timestamp} [${level.toUpperCase()}]: ${message}`;
         
         if (Object.keys(meta).length > 0) {
-            log += ` ${JSON.stringify(meta)}`;
+            try {
+                // 安全的JSON序列化，处理循环引用
+                const seen = new Set();
+                const safeString = JSON.stringify(meta, (key, value) => {
+                    if (typeof value === 'object' && value !== null) {
+                        if (seen.has(value)) {
+                            return '[Circular]';
+                        }
+                        seen.add(value);
+                    }
+                    return value;
+                });
+                log += ` ${safeString}`;
+            } catch (error) {
+                log += ` [Serialization Error]`;
+            }
         }
         
         if (stack) {
@@ -42,7 +57,22 @@ const consoleFormat = winston.format.combine(
         let log = `${timestamp} ${level}: ${message}`;
         
         if (Object.keys(meta).length > 0) {
-            log += ` ${JSON.stringify(meta, null, 2)}`;
+            try {
+                // 安全的JSON序列化，处理循环引用
+                const seen = new Set();
+                const safeString = JSON.stringify(meta, (key, value) => {
+                    if (typeof value === 'object' && value !== null) {
+                        if (seen.has(value)) {
+                            return '[Circular]';
+                        }
+                        seen.add(value);
+                    }
+                    return value;
+                }, 2);
+                log += ` ${safeString}`;
+            } catch (error) {
+                log += ` [Serialization Error]`;
+            }
         }
         
         return log;
@@ -155,6 +185,18 @@ function logAccess(req, res, responseTime) {
 }
 
 /**
+ * 记录认证事件
+ */
+function logAuth(message, username, ip) {
+    logger.info('Auth Event', {
+        message,
+        username,
+        ip,
+        timestamp: new Date().toISOString()
+    });
+}
+
+/**
  * 记录安全事件
  */
 function logSecurity(event, details, req = null) {
@@ -165,9 +207,9 @@ function logSecurity(event, details, req = null) {
     };
 
     if (req) {
-        logData.ip = req.ip || req.connection.remoteAddress;
-        logData.userAgent = req.get('User-Agent');
-        logData.url = req.originalUrl;
+        logData.ip = req.ip || (req.connection && req.connection.remoteAddress) || 'unknown';
+        logData.userAgent = req.get ? req.get('User-Agent') : (req.headers && req.headers['user-agent']) || 'unknown';
+        logData.url = req.originalUrl || req.url;
         
         if (req.user) {
             logData.userId = req.user.id;
@@ -375,6 +417,7 @@ module.exports = {
     
     // 专门的日志记录函数
     logAccess,
+    logAuth,
     logSecurity,
     logPerformance,
     logDatabase,

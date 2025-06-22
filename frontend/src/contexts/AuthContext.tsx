@@ -19,7 +19,7 @@ type AuthAction =
   | { type: 'SET_LOADING'; payload: boolean }
 
 interface AuthContextType extends AuthState {
-  login: (credentials: LoginRequest) => Promise<LoginResponse>
+  login: (username: string, password: string) => Promise<LoginResponse>
   logout: () => void
   refreshToken: () => Promise<boolean>
 }
@@ -106,10 +106,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initAuth()
   }, [])
 
-  const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
+  const login = async (username: string, password: string): Promise<LoginResponse> => {
     dispatch({ type: 'LOGIN_START' })
     
     try {
+      const credentials: LoginRequest = { username, password }
       const response = await authApi.login(credentials)
       
       if (response.success && response.data) {

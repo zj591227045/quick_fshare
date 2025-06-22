@@ -1,6 +1,6 @@
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { Layout, Spin } from 'antd'
+import { Layout, Spin, App as AntdApp } from 'antd'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 
@@ -58,8 +58,9 @@ const App: React.FC = () => {
   const { mode } = useTheme()
 
   return (
-    <Layout style={{ minHeight: '100vh' }} className={`theme-${mode}`}>
-      <Routes>
+    <AntdApp>
+      <Layout style={{ minHeight: '100vh' }} className={`theme-${mode}`}>
+        <Routes>
         {/* 公开访问路由 */}
         <Route path="/" element={<Navigate to="/shares" replace />} />
         <Route
@@ -145,6 +146,7 @@ const App: React.FC = () => {
         />
       </Routes>
     </Layout>
+    </AntdApp>
   )
 }
 

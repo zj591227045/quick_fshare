@@ -136,4 +136,17 @@ html, body {
 
 .no-select {
   user-select: none;
+}
+
+/* Logo 响应式样式 */
+@media (max-width: 768px) {
+  .logo-subtitle {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .ant-typography h4 {
+    font-size: 14px !important;
+  }
 } 

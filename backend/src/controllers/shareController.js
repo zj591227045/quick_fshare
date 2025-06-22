@@ -78,7 +78,9 @@ const getShare = asyncHandler(async (req, res) => {
  */
 const createShare = asyncHandler(async (req, res) => {
   try {
-    const { name, description, path, type, accessType, password, enabled, sortOrder, smbConfig, nfsConfig } = req.body;
+    const { name, description, path, type, accessType, password, enabled, sortOrder, smb_config, nfs_config } = req.body;
+    
+
     
     // 检查名称是否已存在
     const nameExists = await Share.nameExists(name);
@@ -93,7 +95,7 @@ const createShare = asyncHandler(async (req, res) => {
     }
     
     // 创建分享路径
-    const shareId = await Share.create({
+    const newShare = await Share.create({
       name,
       description,
       path,
@@ -102,19 +104,11 @@ const createShare = asyncHandler(async (req, res) => {
       password,
       enabled,
       sortOrder,
+      smbConfig: smb_config,
+      nfsConfig: nfs_config,
     });
     
-    // 创建相关配置
-    if (type === 'smb' && smbConfig) {
-      await Share.createSMBConfig(shareId, smbConfig);
-    } else if (type === 'nfs' && nfsConfig) {
-      await Share.createNFSConfig(shareId, nfsConfig);
-    }
-    
-    // 获取完整的分享路径信息
-    const newShare = await Share.findById(shareId);
-    
-    logger.info('分享路径创建成功', { shareId, name, type, user: req.user.username });
+    logger.info('分享路径创建成功', { shareId: newShare, name, type, user: req.user.username });
     
     res.status(201).json({
       success: true,

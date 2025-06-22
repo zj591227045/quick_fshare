@@ -1,6 +1,6 @@
 const express = require('express');
 const { validate, schemas } = require('../utils/validator');
-const { requireAuth, optionalAuth } = require('../middleware/auth');
+const { requireAuth, optionalAuthenticateAdmin } = require('../middleware/auth');
 const { adminRateLimit, browseRateLimit } = require('../middleware/rateLimit');
 const shareController = require('../controllers/shareController');
 
@@ -14,7 +14,7 @@ const router = express.Router();
 router.get('/',
   requireAuth,
   adminRateLimit,
-  validate(schemas.share.list, 'query'),
+  validate.query(schemas.share.list),
   shareController.getShares
 );
 
@@ -46,7 +46,7 @@ router.get('/stats',
 router.post('/',
   requireAuth,
   adminRateLimit,
-  validate(schemas.share.create),
+  validate.body(schemas.share.create),
   shareController.createShare
 );
 
@@ -78,7 +78,7 @@ router.get('/:id',
 router.put('/:id',
   requireAuth,
   adminRateLimit,
-  validate(schemas.share.update),
+  validate.body(schemas.share.update),
   shareController.updateShare
 );
 

@@ -562,6 +562,150 @@ class Share {
             hasPassword: this.accessType === 'password'
         };
     }
+
+    // 静态方法补充
+    static async nameExists(name, excludeId = null) {
+        try {
+            let query = 'SELECT COUNT(*) as count FROM shared_paths WHERE name = ?';
+            let params = [name];
+            
+            if (excludeId) {
+                query += ' AND id != ?';
+                params.push(excludeId);
+            }
+            
+            const result = await dbManager.get(query, params);
+            return result.count > 0;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async findEnabled() {
+        try {
+            const shares = await dbManager.all(
+                'SELECT * FROM shared_paths WHERE enabled = 1 ORDER BY sort_order ASC, name ASC'
+            );
+            return shares.map(share => new Share(share));
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async validatePassword(shareId, password) {
+        try {
+            const share = await this.findById(shareId, true);
+            if (!share) {
+                return { valid: false, error: '分享不存在' };
+            }
+            
+            if (share.accessType !== 'password') {
+                return { valid: true };
+            }
+            
+            if (!password) {
+                return { valid: false, error: '请输入密码' };
+            }
+            
+            const isValid = await bcrypt.compare(password, share.password);
+            return { valid: isValid, error: isValid ? null : '密码错误' };
+        } catch (error) {
+            return { valid: false, error: '验证失败' };
+        }
+    }
+
+    static async getStats() {
+        try {
+            const totalShares = await dbManager.get('SELECT COUNT(*) as count FROM shared_paths');
+            const enabledShares = await dbManager.get('SELECT COUNT(*) as count FROM shared_paths WHERE enabled = 1');
+            const typeStats = await this.getTypeStats();
+            
+            return {
+                total: totalShares.count,
+                enabled: enabledShares.count,
+                disabled: totalShares.count - enabledShares.count,
+                byType: typeStats
+            };
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async update(id, updateData) {
+        const startTime = Date.now();
+        
+        try {
+            const {
+                name,
+                description,
+                path,
+                type,
+                access_type,
+                password,
+                enabled,
+                sort_order
+            } = updateData;
+
+            let hashedPassword = undefined;
+            if (access_type === 'password' && password) {
+                const saltRounds = 10;
+                hashedPassword = await bcrypt.hash(password, saltRounds);
+            }
+
+            const updates = [];
+            const params = [];
+            
+            if (name !== undefined) { updates.push('name = ?'); params.push(name); }
+            if (description !== undefined) { updates.push('description = ?'); params.push(description); }
+            if (path !== undefined) { updates.push('path = ?'); params.push(path); }
+            if (type !== undefined) { updates.push('type = ?'); params.push(type); }
+            if (access_type !== undefined) { updates.push('access_type = ?'); params.push(access_type); }
+            if (hashedPassword !== undefined) { updates.push('password = ?'); params.push(hashedPassword); }
+            if (enabled !== undefined) { updates.push('enabled = ?'); params.push(enabled ? 1 : 0); }
+            if (sort_order !== undefined) { updates.push('sort_order = ?'); params.push(sort_order); }
+            
+            updates.push('updated_at = CURRENT_TIMESTAMP');
+            params.push(id);
+
+            const query = `UPDATE shared_paths SET ${updates.join(', ')} WHERE id = ?`;
+            const result = await dbManager.run(query, params);
+
+            const duration = Date.now() - startTime;
+            logDatabase('UPDATE', 'shared_paths', duration, { id });
+
+            return result.changes > 0;
+        } catch (error) {
+            const duration = Date.now() - startTime;
+            logDatabase('UPDATE_ERROR', 'shared_paths', duration, { error: error.message });
+            throw error;
+        }
+    }
+
+    static async delete(id) {
+        const startTime = Date.now();
+        
+        try {
+            const result = await dbManager.transaction(async () => {
+                // 删除相关配置
+                await dbManager.run('DELETE FROM smb_configs WHERE shared_path_id = ?', [id]);
+                await dbManager.run('DELETE FROM nfs_configs WHERE shared_path_id = ?', [id]);
+                
+                // 删除分享路径
+                const deleteResult = await dbManager.run('DELETE FROM shared_paths WHERE id = ?', [id]);
+                
+                return deleteResult.changes > 0;
+            });
+
+            const duration = Date.now() - startTime;
+            logDatabase('DELETE', 'shared_paths', duration, { id });
+
+            return result;
+        } catch (error) {
+            const duration = Date.now() - startTime;
+            logDatabase('DELETE_ERROR', 'shared_paths', duration, { error: error.message });
+            throw error;
+        }
+    }
 }
 
 module.exports = Share; 

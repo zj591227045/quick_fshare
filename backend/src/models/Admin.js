@@ -347,6 +347,54 @@ class Admin {
             email: this.email
         };
     }
+
+    // 静态方法补充
+    static async usernameExists(username, excludeId = null) {
+        try {
+            let query = 'SELECT COUNT(*) as count FROM admins WHERE username = ?';
+            let params = [username];
+            
+            if (excludeId) {
+                query += ' AND id != ?';
+                params.push(excludeId);
+            }
+            
+            const result = await dbManager.get(query, params);
+            return result.count > 0;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async emailExists(email, excludeId = null) {
+        try {
+            let query = 'SELECT COUNT(*) as count FROM admins WHERE email = ?';
+            let params = [email];
+            
+            if (excludeId) {
+                query += ' AND id != ?';
+                params.push(excludeId);
+            }
+            
+            const result = await dbManager.get(query, params);
+            return result.count > 0;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async update(id, updateData) {
+        try {
+            const admin = await this.findById(id);
+            if (!admin) {
+                throw new Error('管理员不存在');
+            }
+            
+            return await admin.update(updateData);
+        } catch (error) {
+            throw error;
+        }
+    }
 }
 
 module.exports = Admin; 

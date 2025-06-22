@@ -199,6 +199,127 @@ class DatabaseManager {
       return false;
     }
   }
+
+  /**
+   * 初始化数据库表结构
+   */
+  async initTables() {
+    try {
+      // 读取并执行SQL schema文件
+      const schemaPath = path.join(__dirname, '../../../database/schema.sql');
+      
+      if (fs.existsSync(schemaPath)) {
+        const schema = fs.readFileSync(schemaPath, 'utf8');
+        
+        // 分割SQL语句并执行
+        const statements = schema.split(';').filter(stmt => stmt.trim());
+        
+        for (const statement of statements) {
+          if (statement.trim()) {
+            await this.run(statement.trim());
+          }
+        }
+        
+        logger.info('数据库表结构初始化完成');
+      } else {
+        // 如果schema文件不存在，手动创建基础表结构
+        await this.createBasicTables();
+        logger.info('基础数据库表结构创建完成');
+      }
+    } catch (error) {
+      logger.error('数据库表初始化失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 创建基础表结构
+   */
+  async createBasicTables() {
+    // 管理员表
+    await this.run(`
+      CREATE TABLE IF NOT EXISTS admins (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        email VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // 分享路径表
+    await this.run(`
+      CREATE TABLE IF NOT EXISTS shared_paths (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name VARCHAR(100) NOT NULL,
+        description TEXT,
+        path VARCHAR(500) NOT NULL,
+        type VARCHAR(20) NOT NULL CHECK (type IN ('local', 'smb', 'nfs')),
+        access_type VARCHAR(20) DEFAULT 'public' CHECK (access_type IN ('public', 'password')),
+        password VARCHAR(255),
+        enabled BOOLEAN DEFAULT 1,
+        sort_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // 系统设置表
+    await this.run(`
+      CREATE TABLE IF NOT EXISTS system_settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        key VARCHAR(100) UNIQUE NOT NULL,
+        value TEXT,
+        type VARCHAR(20) DEFAULT 'string',
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // 访问日志表
+    await this.run(`
+      CREATE TABLE IF NOT EXISTS access_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        shared_path_id INTEGER,
+        client_ip VARCHAR(45),
+        user_agent TEXT,
+        file_path VARCHAR(500),
+        action VARCHAR(20),
+        response_code INTEGER,
+        response_time INTEGER,
+        file_size INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (shared_path_id) REFERENCES shared_paths(id) ON DELETE SET NULL
+      )
+    `);
+  }
+
+  /**
+   * 获取数据库统计信息
+   */
+  async getStats() {
+    try {
+      const tables = ['admins', 'shared_paths', 'system_settings', 'access_logs'];
+      const stats = {};
+      
+      for (const table of tables) {
+        try {
+          const result = await this.get(`SELECT COUNT(*) as count FROM ${table}`);
+          stats[table] = result.count;
+        } catch (error) {
+          // 如果表不存在，设为0
+          stats[table] = 0;
+        }
+      }
+      
+      return stats;
+    } catch (error) {
+      logger.error('获取数据库统计失败:', error);
+      return {};
+    }
+  }
 }
 
 // 创建全局数据库实例

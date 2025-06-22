@@ -1,0 +1,250 @@
+2025-06-22 13:15:31 [ERROR]: 登录过程中发生错误: Cannot read properties of null (reading 'get')
+TypeError: Cannot read properties of null (reading 'get')
+    at /Users/jackson/Documents/Code/Quick_FShare/backend/src/config/database.js:64:15
+    at new Promise (<anonymous>)
+    at DatabaseManager.get (/Users/jackson/Documents/Code/Quick_FShare/backend/src/config/database.js:63:12)
+    at Admin.authenticate (/Users/jackson/Documents/Code/Quick_FShare/backend/src/models/Admin.js:107:43)
+    at /Users/jackson/Documents/Code/Quick_FShare/backend/src/controllers/authController.js:15:31
+    at /Users/jackson/Documents/Code/Quick_FShare/backend/src/middleware/errorHandler.js:229:25
+    at Layer.handle [as handle_request] (/Users/jackson/Documents/Code/Quick_FShare/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/jackson/Documents/Code/Quick_FShare/node_modules/express/lib/router/route.js:149:13)
+    at /Users/jackson/Documents/Code/Quick_FShare/backend/src/utils/validator.js:290:9
+    at Layer.handle [as handle_request] (/Users/jackson/Documents/Code/Quick_FShare/node_modules/express/lib/router/layer.js:95:5)
+2025-06-22 13:18:41 [ERROR]: 登录过程中发生错误: logger.auth is not a function
+TypeError: logger.auth is not a function
+    at /Users/jackson/Documents/Code/Quick_FShare/backend/src/controllers/authController.js:43:12
+2025-06-22 13:22:33 [ERROR]: 登录过程中发生错误: logger.auth is not a function
+TypeError: logger.auth is not a function
+    at /Users/jackson/Documents/Code/Quick_FShare/backend/src/controllers/authController.js:43:12
+2025-06-22 13:23:50 [ERROR]: 登录过程中发生错误: Converting circular structure to JSON
+    --> starting at object with constructor 'Socket'
+    |     property 'parser' -> object with constructor 'HTTPParser'
+    --- property 'socket' closes the circle
+TypeError: Converting circular structure to JSON
+    --> starting at object with constructor 'Socket'
+    |     property 'parser' -> object with constructor 'HTTPParser'
+    --- property 'socket' closes the circle
+    at JSON.stringify (<anonymous>)
+    at Printf.template (/Users/jackson/Documents/Code/Quick_FShare/backend/src/utils/logger.js:24:29)
+    at Printf.transform (/Users/jackson/Documents/Code/Quick_FShare/node_modules/logform/printf.js:11:26)
+    at Format.transform (/Users/jackson/Documents/Code/Quick_FShare/node_modules/logform/combine.js:20:24)
+    at DerivedLogger._transform (/Users/jackson/Documents/Code/Quick_FShare/node_modules/winston/lib/winston/logger.js:314:29)
+    at Transform._read (/Users/jackson/Documents/Code/Quick_FShare/node_modules/readable-stream/lib/_stream_transform.js:166:10)
+    at Transform._write (/Users/jackson/Documents/Code/Quick_FShare/node_modules/readable-stream/lib/_stream_transform.js:155:83)
+    at doWrite (/Users/jackson/Documents/Code/Quick_FShare/node_modules/readable-stream/lib/_stream_writable.js:390:139)
+    at writeOrBuffer (/Users/jackson/Documents/Code/Quick_FShare/node_modules/readable-stream/lib/_stream_writable.js:381:5)
+    at Writable.write (/Users/jackson/Documents/Code/Quick_FShare/node_modules/readable-stream/lib/_stream_writable.js:302:11)
+2025-06-22 13:54:07 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:54:07 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:54:08 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:54:08 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:54:13 [ERROR]: 浏览本地目录失败 {"dirPath":"/","error":"validatePath is not a function"}
+2025-06-22 13:54:13 [ERROR]: 浏览文件失败 {"shareId":"4","path":"/","error":"无法浏览目录: validatePath is not a function"}
+2025-06-22 13:54:13 [ERROR]: 浏览本地目录失败 {"dirPath":"/","error":"validatePath is not a function"}
+2025-06-22 13:54:13 [ERROR]: 浏览文件失败 {"shareId":"4","path":"/","error":"无法浏览目录: validatePath is not a function"}
+2025-06-22 13:55:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:55:14 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:55:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:55:26 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:55:36 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:55:37 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:55:49 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:55:50 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:56:06 [ERROR]: 获取文件信息失败 {"itemPath":"/.VolumeIcon.icns","error":"ENOENT: no such file or directory, stat '/.VolumeIcon.icns'"}
+2025-06-22 13:56:06 [ERROR]: 获取文件信息失败 {"itemPath":"/.VolumeIcon.icns","error":"ENOENT: no such file or directory, stat '/.VolumeIcon.icns'"}
+2025-06-22 13:56:06 [ERROR]: 浏览文件失败 {"shareId":"4","path":"/","error":"Cannot read properties of undefined (reading 'logAccess')"}
+2025-06-22 13:56:06 [ERROR]: 浏览文件失败 {"shareId":"4","path":"/","error":"Cannot read properties of undefined (reading 'logAccess')"}
+2025-06-22 13:56:52 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:56:53 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:57:06 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:57:07 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:57:35 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:57:36 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:58:13 [ERROR]: 浏览文件失败 {"shareId":"5","path":"/","error":"fullPath is not defined"}
+2025-06-22 13:58:13 [ERROR]: 浏览文件失败 {"shareId":"5","path":"/","error":"fullPath is not defined"}
+2025-06-22 13:58:22 [ERROR]: 浏览文件失败 {"shareId":"5","path":"/","error":"fullPath is not defined"}
+2025-06-22 13:58:40 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:58:41 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 13:58:48 [ERROR]: 记录访问日志失败 {"error":"SQLITE_ERROR: table access_logs has no column named created_at"}
+2025-06-22 13:58:58 [ERROR]: 记录访问日志失败 {"error":"SQLITE_ERROR: table access_logs has no column named created_at"}
+2025-06-22 13:58:58 [ERROR]: 记录访问日志失败 {"error":"SQLITE_ERROR: table access_logs has no column named created_at"}
+2025-06-22 14:00:31 [ERROR]: 记录访问日志失败 {"error":"SQLITE_ERROR: table access_logs has no column named created_at"}
+2025-06-22 14:00:31 [ERROR]: 记录访问日志失败 {"error":"SQLITE_ERROR: table access_logs has no column named created_at"}
+2025-06-22 14:00:34 [ERROR]: 浏览文件失败 {"shareId":"6","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:00:34 [ERROR]: 浏览文件失败 {"shareId":"6","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:01:24 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:01:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:01:34 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:01:34 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:03:26 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:03:26 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:03:39 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:03:40 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:03:57 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:05:03 [ERROR]: 浏览文件失败 {"shareId":"6","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:05:03 [ERROR]: 浏览文件失败 {"shareId":"6","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:05:49 [ERROR]: 浏览文件失败 {"shareId":"7","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:05:49 [ERROR]: 浏览文件失败 {"shareId":"7","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:07:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:07:14 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:07:26 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:11:02 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:11:03 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:11:10 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:11:11 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:12:23 [ERROR]: 浏览文件失败 {"shareId":"9","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:12:23 [ERROR]: 浏览文件失败 {"shareId":"9","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:14:35 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:14:51 [ERROR]: 浏览文件失败 {"shareId":"9","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:14:51 [ERROR]: 浏览文件失败 {"shareId":"9","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:16:47 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:17:54 [ERROR]: 浏览文件失败 {"shareId":"11","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:17:54 [ERROR]: 浏览文件失败 {"shareId":"11","path":"/","error":"SMB配置不存在"}
+2025-06-22 14:20:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:20:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:20:35 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:20:36 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:20:47 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:20:49 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:22:49 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:22:49 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:23:12 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:23:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:23:23 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:23:24 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:23:33 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:23:34 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:24:32 [ERROR]: 浏览SMB目录失败 {"remotePath":"/","error":"SMB2 is not a constructor"}
+2025-06-22 14:24:32 [ERROR]: 浏览文件失败 {"shareId":"14","path":"/","error":"无法浏览SMB目录: SMB2 is not a constructor"}
+2025-06-22 14:24:32 [ERROR]: 浏览SMB目录失败 {"remotePath":"/","error":"SMB2 is not a constructor"}
+2025-06-22 14:24:32 [ERROR]: 浏览文件失败 {"shareId":"14","path":"/","error":"无法浏览SMB目录: SMB2 is not a constructor"}
+2025-06-22 14:24:40 [ERROR]: 浏览SMB目录失败 {"remotePath":"/","error":"SMB2 is not a constructor"}
+2025-06-22 14:24:40 [ERROR]: 浏览文件失败 {"shareId":"14","path":"/","error":"无法浏览SMB目录: SMB2 is not a constructor"}
+2025-06-22 14:24:40 [ERROR]: 浏览SMB目录失败 {"remotePath":"/","error":"SMB2 is not a constructor"}
+2025-06-22 14:24:40 [ERROR]: 浏览文件失败 {"shareId":"14","path":"/","error":"无法浏览SMB目录: SMB2 is not a constructor"}
+2025-06-22 14:24:43 [ERROR]: 浏览SMB目录失败 {"remotePath":"/","error":"SMB2 is not a constructor"}
+2025-06-22 14:24:43 [ERROR]: 浏览文件失败 {"shareId":"14","path":"/","error":"无法浏览SMB目录: SMB2 is not a constructor"}
+2025-06-22 14:24:43 [ERROR]: 浏览SMB目录失败 {"remotePath":"/","error":"SMB2 is not a constructor"}
+2025-06-22 14:24:43 [ERROR]: 浏览文件失败 {"shareId":"14","path":"/","error":"无法浏览SMB目录: SMB2 is not a constructor"}
+2025-06-22 14:25:45 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:25:46 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:25:55 [ERROR]: 浏览SMB目录失败 {"remotePath":"/","error":"SMB错误: connect EISCONN 10.255.0.75:445 - Local (10.255.0.27:61418)"}
+2025-06-22 14:25:55 [ERROR]: 浏览文件失败 {"shareId":"14","path":"/","error":"无法浏览SMB目录: SMB错误: connect EISCONN 10.255.0.75:445 - Local (10.255.0.27:61418)"}
+2025-06-22 14:25:59 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:26:38 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:26:39 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:26:51 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:26:52 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:27:02 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:27:03 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:27:16 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:28:06 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:28:07 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:28:15 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:28:16 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:28:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:28:26 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:32:05 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:33:12 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:33:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:34:29 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:34:29 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:34:40 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:34:41 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:35:08 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:35:09 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:35:53 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:36:16 [ERROR]: 获取SMB文件信息失败 {"remotePath":"test.txt","error":"无法获取SMB文件信息: STATUS_OBJECT_NAME_NOT_FOUND (0xC0000034) : The object name is not found."}
+2025-06-22 14:36:16 [ERROR]: 下载文件失败 {"shareId":"14","filePath":"test.txt","error":"无法获取SMB文件信息: 无法获取SMB文件信息: STATUS_OBJECT_NAME_NOT_FOUND (0xC0000034) : The object name is not found."}
+2025-06-22 14:36:58 [ERROR]: 获取SMB文件信息失败 {"remotePath":"test.txt","error":"无法获取SMB文件信息: STATUS_OBJECT_NAME_NOT_FOUND (0xC0000034) : The object name is not found."}
+2025-06-22 14:36:58 [ERROR]: 下载文件失败 {"shareId":"14","filePath":"test.txt","error":"无法获取SMB文件信息: 无法获取SMB文件信息: STATUS_OBJECT_NAME_NOT_FOUND (0xC0000034) : The object name is not found."}
+2025-06-22 14:38:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:38:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:40:05 [ERROR]: SMB读取流错误 {"error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:40:05 [ERROR]: 文件流错误 {"shareId":"14","filePath":"GM200.rom","error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:40:24 [ERROR]: SMB读取流错误 {"error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:40:24 [ERROR]: 文件流错误 {"shareId":"14","filePath":"GM200.rom","error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:40:36 [ERROR]: SMB读取流错误 {"error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:40:36 [ERROR]: 文件流错误 {"shareId":"14","filePath":"GM200.rom","error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:42:49 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:42:50 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:43:03 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:43:04 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:43:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:43:14 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:46:50 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:46:50 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:46:50 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:46:50 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:10 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:10 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:11 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:11 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:20 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:20 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:21 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:21 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:28 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:28 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:29 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:29 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:42 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:43 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:56 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:47:57 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:48:05 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:48:06 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:48:15 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:48:16 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:48:23 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:48:24 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:49:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:49:30 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:49:31 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:49:38 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:49:39 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:49:46 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:49:47 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:50:19 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:51:07 [ERROR]: SMB读取流错误 {"error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:51:07 [ERROR]: 文件流错误 {"shareId":"14","filePath":"GM200.rom","error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:51:26 [ERROR]: SMB读取流错误 {"error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:51:26 [ERROR]: 文件流错误 {"shareId":"14","filePath":"GM200.rom","error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 14:51:52 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:51:52 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:51:53 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:51:53 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:02 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:02 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:03 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:03 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:15 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:15 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:16 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:16 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:24 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:24 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:25 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:37 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:37 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:38 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 14:52:38 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:00:23 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:00:23 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:00:24 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:00:24 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:01:38 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:01:38 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:01:39 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:01:39 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:01:50 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:01:50 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:01:51 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:01:51 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:02:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:02:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:02:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:02:13 [ERROR]: 加载缓存失败 {"error":"this.db.query is not a function"}
+2025-06-22 15:19:39 [ERROR]: SMB读取流错误 {"error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}
+2025-06-22 15:19:39 [ERROR]: 文件流错误 {"shareId":"14","filePath":"GM200.rom","error":"STATUS_FILE_CLOSED (0xC0000128) : An I/O request other than close and several other special case operations was attempted using a file object that had already been closed."}

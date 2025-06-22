@@ -6,6 +6,9 @@ const morgan = require('morgan');
 const path = require('path');
 require('dotenv').config();
 
+// 导入数据库管理器
+const dbManager = require('./src/config/database');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -14,8 +17,10 @@ app.use(helmet());
 app.use(cors());
 app.use(compression());
 app.use(morgan('combined'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+
 
 // 静态文件服务
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -39,13 +44,15 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// API路由 - 暂时简化
-app.get('/api/shares', (req, res) => {
-  res.json({
-    message: 'Shares API endpoint',
-    data: []
-  });
-});
+// 路由配置
+const authRoutes = require('./src/routes/auth');
+const sharesRoutes = require('./src/routes/shares');
+const browseRoutes = require('./src/routes/browse');
+
+// API路由
+app.use('/api/auth', authRoutes);
+app.use('/api/shares', sharesRoutes);
+app.use('/api/browse', browseRoutes);
 
 // 错误处理
 app.use((err, req, res, next) => {
@@ -65,10 +72,25 @@ app.use((req, res) => {
 });
 
 // 启动服务器
-app.listen(PORT, () => {
-  console.log(`🚀 Quick FShare Backend 服务器运行在端口 ${PORT}`);
-  console.log(`📝 API 文档: http://localhost:${PORT}/`);
-  console.log(`🔍 健康检查: http://localhost:${PORT}/api/health`);
-});
+async function startServer() {
+  try {
+    // 连接数据库
+    await dbManager.connect();
+    console.log('✅ 数据库连接成功');
+    
+    // 启动HTTP服务器
+    app.listen(PORT, () => {
+      console.log(`🚀 Quick FShare Backend 服务器运行在端口 ${PORT}`);
+      console.log(`📝 API 文档: http://localhost:${PORT}/`);
+      console.log(`🔍 健康检查: http://localhost:${PORT}/api/health`);
+    });
+  } catch (error) {
+    console.error('❌ 服务器启动失败:', error);
+    process.exit(1);
+  }
+}
+
+// 启动服务器
+startServer();
 
 module.exports = app; 

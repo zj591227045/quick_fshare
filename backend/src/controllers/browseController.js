@@ -7,6 +7,10 @@ const Share = require('../models/Share')
 const { generateTemporaryToken, verifyTemporaryToken } = require('../middleware/auth')
 
 class BrowseController {
+  constructor() {
+    this.fileSystemService = new FileSystemService()
+    this.thumbnailService = new ThumbnailService()
+  }
   /**
    * 浏览分享路径的文件列表
    */
@@ -44,20 +48,9 @@ class BrowseController {
         }
       }
 
-      // 构建实际路径
-      const basePath = share.path
-      const fullPath = requestPath ? path.join(basePath, requestPath) : basePath
-
-      // 验证路径安全性
-      if (!fullPath.startsWith(basePath)) {
-        return res.status(403).json({
-          success: false,
-          message: '访问路径无效'
-        })
-      }
-
-      // 浏览文件
-      const result = await FileSystemService.browseDirectory(fullPath, {
+      // 浏览文件（根据分享类型自动选择方式）
+      const result = await this.fileSystemService.browseDirectory(share, {
+        requestPath,
         sort,
         order,
         search,
@@ -66,7 +59,7 @@ class BrowseController {
       })
 
       // 记录访问日志
-      await this.logAccess(shareId, clientIp, fullPath, 'browse')
+      await this.logAccess(shareId, clientIp, requestPath || '/', 'browse')
 
       res.json({
         success: true,
@@ -189,30 +182,98 @@ class BrowseController {
         }
       }
 
-      // 构建实际文件路径
-      const basePath = share.path
-      const fullPath = path.join(basePath, filePath)
+      let fileInfo, stream
 
-      // 验证路径安全性
-      if (!fullPath.startsWith(basePath)) {
-        return res.status(403).json({
-          success: false,
-          message: '访问路径无效'
-        })
-      }
+      // 检查是否是HEAD请求 - HEAD请求只需要文件信息，不需要创建流
+      const isHeadRequest = req.method === 'HEAD'
 
-      // 获取文件信息
-      const fileInfo = await FileSystemService.getItemInfo(fullPath)
-      if (fileInfo.type !== 'file') {
-        return res.status(400).json({
-          success: false,
-          message: '只能下载文件'
-        })
+      // 根据分享类型处理文件下载
+      switch (share.type) {
+        case 'local':
+          // 本地文件下载
+          const basePath = share.path
+          const fullPath = path.join(basePath, filePath)
+
+          // 验证路径安全性
+          if (!fullPath.startsWith(basePath)) {
+            return res.status(403).json({
+              success: false,
+              message: '访问路径无效'
+            })
+          }
+
+          // 获取文件信息
+          fileInfo = await this.fileSystemService.getItemInfo(fullPath)
+          if (fileInfo.type !== 'file') {
+            return res.status(400).json({
+              success: false,
+              message: '只能下载文件'
+            })
+          }
+
+          // 只有非HEAD请求才创建流
+          if (!isHeadRequest) {
+            // 处理范围请求 (支持断点续传)
+            const range = req.headers.range
+            if (range) {
+              const parts = range.replace(/bytes=/, "").split("-")
+              const start = parseInt(parts[0], 10)
+              const end = parts[1] ? parseInt(parts[1], 10) : fileInfo.size - 1
+              const chunksize = (end - start) + 1
+
+              res.status(206)
+              res.setHeader('Content-Range', `bytes ${start}-${end}/${fileInfo.size}`)
+              res.setHeader('Content-Length', chunksize)
+
+              stream = this.fileSystemService.createReadStream(fullPath, { start, end })
+            } else {
+              // 普通下载
+              stream = this.fileSystemService.createReadStream(fullPath)
+            }
+          }
+          break
+
+        case 'smb':
+          // SMB文件下载
+          if (!share.smbConfig) {
+            return res.status(500).json({
+              success: false,
+              message: 'SMB配置不存在'
+            })
+          }
+
+          // 获取SMB文件信息
+          fileInfo = await this.fileSystemService.getSMBFileInfo(share.smbConfig, filePath)
+          if (fileInfo.type !== 'file') {
+            return res.status(400).json({
+              success: false,
+              message: '只能下载文件'
+            })
+          }
+
+          // 只有非HEAD请求才创建SMB读取流
+          if (!isHeadRequest) {
+            stream = await this.fileSystemService.createSMBReadStream(share.smbConfig, filePath)
+          }
+          break
+
+        case 'nfs':
+          // NFS文件下载 - 暂未实现
+          return res.status(501).json({
+            success: false,
+            message: 'NFS文件下载暂未实现'
+          })
+
+        default:
+          return res.status(400).json({
+            success: false,
+            message: `不支持的分享类型: ${share.type}`
+          })
       }
 
       // 记录下载日志
-      await this.logAccess(shareId, clientIp, fullPath, 'download')
-      await this.recordDownload(shareId, fullPath, clientIp, fileInfo.size)
+      await this.logAccess(shareId, clientIp, filePath, 'download')
+      await this.recordDownload(shareId, filePath, clientIp, fileInfo.size)
 
       // 设置响应头
       res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileInfo.name)}"`)
@@ -220,25 +281,39 @@ class BrowseController {
       res.setHeader('Content-Length', fileInfo.size)
       res.setHeader('Accept-Ranges', 'bytes')
 
-      // 处理范围请求 (支持断点续传)
-      const range = req.headers.range
-      if (range) {
-        const parts = range.replace(/bytes=/, "").split("-")
-        const start = parseInt(parts[0], 10)
-        const end = parts[1] ? parseInt(parts[1], 10) : fileInfo.size - 1
-        const chunksize = (end - start) + 1
-
-        res.status(206)
-        res.setHeader('Content-Range', `bytes ${start}-${end}/${fileInfo.size}`)
-        res.setHeader('Content-Length', chunksize)
-
-        const stream = FileSystemService.createReadStream(fullPath, { start, end })
-        stream.pipe(res)
-      } else {
-        // 普通下载
-        const stream = FileSystemService.createReadStream(fullPath)
-        stream.pipe(res)
+      // 检查是否是HEAD请求
+      if (isHeadRequest) {
+        // HEAD请求只返回响应头，不返回响应体
+        return res.end()
       }
+
+      // 管道文件流到响应
+      if (stream) {
+        stream.pipe(res)
+
+        // 处理流错误
+        stream.on('error', (error) => {
+          logger.error('文件流错误', {
+            shareId,
+            filePath,
+            error: error.message
+          })
+          
+          if (!res.headersSent) {
+            res.status(500).json({
+              success: false,
+              message: `下载失败: ${error.message}`
+            })
+          }
+        })
+      } else {
+        // 如果没有流（不应该发生），返回错误
+        return res.status(500).json({
+          success: false,
+          message: '无法创建文件流'
+        })
+      }
+
     } catch (error) {
       logger.error('下载文件失败', {
         shareId: req.params.shareId,
@@ -292,13 +367,13 @@ class BrowseController {
       }
 
       // 检查文件是否存在且支持缩略图
-      const fileInfo = await FileSystemService.getItemInfo(fullPath)
+      const fileInfo = await this.fileSystemService.getItemInfo(fullPath)
       if (!fileInfo.has_thumbnail) {
         return res.status(400).send('文件不支持缩略图')
       }
 
       // 生成缩略图
-      const thumbnailPath = await ThumbnailService.generateThumbnail(fullPath, size)
+      const thumbnailPath = await this.thumbnailService.generateThumbnail(fullPath, size)
 
       // 设置响应头
       res.setHeader('Content-Type', 'image/jpeg')
@@ -363,7 +438,7 @@ class BrowseController {
 
       // 搜索文件
       const extensionList = extensions ? extensions.split(',') : []
-      const results = await FileSystemService.searchFiles(share.path, query, {
+      const results = await this.fileSystemService.searchFiles(share.path, query, {
         extensions: extensionList,
         maxResults: parseInt(max_results)
       })
@@ -441,8 +516,8 @@ class BrowseController {
       }
 
       // 获取文件信息
-      const fileInfo = await FileSystemService.getItemInfo(fullPath)
-      const fileStats = await FileSystemService.getFileStats(fullPath)
+      const fileInfo = await this.fileSystemService.getItemInfo(fullPath)
+      const fileStats = await this.fileSystemService.getFileStats(fullPath)
 
       res.json({
         success: true,
@@ -470,11 +545,9 @@ class BrowseController {
    */
   async logAccess(shareId, clientIp, filePath, action) {
     try {
-      const db = require('../config/database')
-      const dbInstance = new db()
-      await dbInstance.connect()
+      const dbManager = require('../config/database')
 
-      await dbInstance.query(
+      await dbManager.run(
         `INSERT INTO access_logs (shared_path_id, client_ip, file_path, action, accessed_at)
          VALUES (?, ?, ?, ?, ?)`,
         [shareId, clientIp, filePath, action, new Date().toISOString()]
@@ -489,14 +562,12 @@ class BrowseController {
    */
   async recordDownload(shareId, filePath, clientIp, fileSize) {
     try {
-      const db = require('../config/database')
-      const dbInstance = new db()
-      await dbInstance.connect()
+      const dbManager = require('../config/database')
 
-      await dbInstance.query(
-        `INSERT INTO download_records (shared_path_id, file_path, client_ip, file_size, downloaded_at)
-         VALUES (?, ?, ?, ?, ?)`,
-        [shareId, filePath, clientIp, fileSize, new Date().toISOString()]
+      await dbManager.run(
+        `INSERT INTO access_logs (shared_path_id, client_ip, file_path, action, file_size, accessed_at)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [shareId, clientIp, filePath, 'download', fileSize, new Date().toISOString()]
       )
     } catch (error) {
       logger.error('记录下载记录失败', { error: error.message })
@@ -504,4 +575,4 @@ class BrowseController {
   }
 }
 
-module.exports = new BrowseController() 
+module.exports = BrowseController 

@@ -13,7 +13,7 @@ const router = express.Router();
  */
 router.post('/login', 
   loginRateLimit,
-  validate(schemas.admin.login),
+  validate.body(schemas.admin.login),
   authController.login
 );
 
@@ -53,7 +53,7 @@ router.get('/user', requireAuth, authController.getCurrentUser);
 router.put('/password',
   requireAuth,
   strictRateLimit,
-  validate(schemas.admin.password || schemas.admin.create), // 使用密码验证
+  validate.body(schemas.admin.update), // 使用更新验证
   authController.changePassword
 );
 
@@ -64,7 +64,7 @@ router.put('/password',
  */
 router.put('/profile',
   requireAuth,
-  validate(schemas.admin.update),
+  validate.body(schemas.admin.update),
   authController.updateProfile
 );
 

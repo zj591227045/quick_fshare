@@ -1,5 +1,6 @@
 const Admin = require('../models/Admin');
-const { generateAccessToken, generateRefreshToken, verifyRefreshToken, logSecurityEvent } = require('../middleware/auth');
+const { generateAccessToken, generateRefreshToken, verifyToken } = require('../middleware/auth');
+const { logSecurity: logSecurityEvent } = require('../utils/logger');
 const logger = require('../utils/logger');
 const { asyncHandler } = require('../middleware/errorHandler');
 
@@ -11,9 +12,9 @@ const login = asyncHandler(async (req, res) => {
   
   try {
     // 验证用户凭据
-    const { valid, admin } = await Admin.validatePassword(username, password);
+    const admin = await Admin.authenticate(username, password);
     
-    if (!valid) {
+    if (!admin) {
       logSecurityEvent('LOGIN_FAILED', req, { username, reason: 'invalid_credentials' });
       
       return res.status(401).json({
@@ -35,11 +36,11 @@ const login = asyncHandler(async (req, res) => {
     const accessToken = generateAccessToken(tokenPayload);
     const refreshToken = generateRefreshToken(tokenPayload);
     
-    // 更新最后登录时间
-    await Admin.updateLastLogin(admin.id);
+    // 这里可以添加更新最后登录时间的逻辑（暂时跳过）
+    // await Admin.updateLastLogin(admin.id);
     
     // 记录登录成功日志
-    logger.auth('管理员登录成功', admin.username, req.ip);
+    logger.logAuth('管理员登录成功', admin.username, req.ip);
     logSecurityEvent('LOGIN_SUCCESS', req, { username: admin.username });
     
     // 设置cookie（如果选择记住登录）
@@ -55,12 +56,12 @@ const login = asyncHandler(async (req, res) => {
     res.json({
       success: true,
       data: {
-        user: {
+        admin: {
           id: admin.id,
           username: admin.username,
           email: admin.email,
         },
-        token: accessToken,
+        accessToken: accessToken,
         refreshToken: refreshToken,
         expiresIn: 3600, // 1小时
       },
@@ -102,7 +103,17 @@ const refresh = asyncHandler(async (req, res) => {
   
   try {
     // 验证刷新令牌
-    const decoded = verifyRefreshToken(token);
+    const { valid, decoded, error } = verifyToken(token, 'refresh');
+    
+    if (!valid) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'INVALID_REFRESH_TOKEN',
+          message: '无效的刷新令牌',
+        },
+      });
+    }
     
     // 验证用户是否仍然存在
     const admin = await Admin.findById(decoded.id);
@@ -123,19 +134,19 @@ const refresh = asyncHandler(async (req, res) => {
       type: 'access',
     });
     
-    logger.auth('令牌刷新成功', admin.username, req.ip);
+    logger.logAuth('令牌刷新成功', admin.username, req.ip);
     
     res.json({
       success: true,
       data: {
-        token: newAccessToken,
+        accessToken: newAccessToken,
         expiresIn: 3600, // 1小时
       },
       message: '令牌刷新成功',
     });
     
   } catch (error) {
-    logger.auth('令牌刷新失败', null, req.ip);
+    logger.logAuth('令牌刷新失败', null, req.ip);
     
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
@@ -183,7 +194,7 @@ const logout = asyncHandler(async (req, res) => {
     // 在实际应用中，可能需要将token加入黑名单
     // 目前使用短期token，到期自动失效
     
-    logger.auth('管理员登出', req.user.username, req.ip);
+    logger.logAuth('管理员登出', req.user.username, req.ip);
     logSecurityEvent('LOGOUT', req, { username: req.user.username });
     
     res.json({
@@ -255,9 +266,9 @@ const changePassword = asyncHandler(async (req, res) => {
   
   try {
     // 验证当前密码
-    const { valid } = await Admin.validatePassword(req.user.username, currentPassword);
+    const admin = await Admin.authenticate(req.user.username, currentPassword);
     
-    if (!valid) {
+          if (!admin) {
       logSecurityEvent('PASSWORD_CHANGE_FAILED', req, { 
         username: req.user.username, 
         reason: 'invalid_current_password' 

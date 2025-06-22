@@ -41,6 +41,8 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({
               alignItems: 'center',
               gap: 12,
               cursor: 'pointer',
+              minWidth: 0, // 允许收缩
+              flex: '0 1 auto', // 不增长，允许收缩
             }}
             onClick={() => navigate('/shares')}
           >
@@ -56,16 +58,37 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({
                 color: 'white',
                 fontSize: '18px',
                 fontWeight: 'bold',
+                flexShrink: 0, // 图标不收缩
               }}
             >
               Q
             </div>
-            <div>
-              <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>
+            <div style={{ minWidth: 0, flex: '1 1 auto' }}>
+              <Title 
+                level={4} 
+                style={{ 
+                  margin: 0, 
+                  color: 'var(--text-primary)',
+                  fontSize: '16px',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}
+              >
                 Quick FShare
               </Title>
-              <Text style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                局域网文件快速分享
+              <Text 
+                style={{ 
+                  fontSize: '12px', 
+                  color: 'var(--text-secondary)',
+                  display: 'block',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}
+                className="logo-subtitle"
+              >
+                局域网文件分享
               </Text>
             </div>
           </div>
