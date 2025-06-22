@@ -1,11 +1,11 @@
 const logger = require('../utils/logger')
 const MonitoringService = require('../services/MonitoringService')
 const ThumbnailService = require('../services/ThumbnailService')
-const DatabaseManager = require('../config/database')
+const dbManager = require('../config/database')
 
 class SystemController {
   constructor() {
-    this.db = new DatabaseManager()
+    this.db = dbManager
     this.thumbnailService = new ThumbnailService()
     this.monitoringService = new MonitoringService()
   }
@@ -107,7 +107,7 @@ class SystemController {
         : ''
 
       // 获取日志数据
-      const logs = await this.db.query(`
+      const logs = await this.db.all(`
         SELECT * FROM system_logs 
         ${whereClause}
         ORDER BY timestamp DESC 
@@ -115,12 +115,12 @@ class SystemController {
       `, [...params, parseInt(limit), parseInt(offset)])
 
       // 获取总数
-      const totalResult = await this.db.query(`
+      const totalResult = await this.db.get(`
         SELECT COUNT(*) as total FROM system_logs 
         ${whereClause}
       `, params)
 
-      const total = totalResult[0].total
+      const total = totalResult.total
 
       res.json({
         success: true,
@@ -185,7 +185,7 @@ class SystemController {
         : ''
 
       // 获取访问日志
-      const logs = await this.db.query(`
+      const logs = await this.db.all(`
         SELECT 
           al.*,
           sp.name as share_name,
@@ -198,14 +198,14 @@ class SystemController {
       `, [...params, parseInt(limit), parseInt(offset)])
 
       // 获取总数
-      const totalResult = await this.db.query(`
+      const totalResult = await this.db.get(`
         SELECT COUNT(*) as total 
         FROM access_logs al
         LEFT JOIN shared_paths sp ON al.shared_path_id = sp.id
         ${whereClause}
       `, params)
 
-      const total = totalResult[0].total
+      const total = totalResult.total
 
       res.json({
         success: true,
@@ -264,7 +264,7 @@ class SystemController {
         : ''
 
       // 获取下载记录
-      const records = await this.db.query(`
+      const records = await this.db.all(`
         SELECT 
           dr.*,
           sp.name as share_name,
@@ -277,14 +277,14 @@ class SystemController {
       `, [...params, parseInt(limit), parseInt(offset)])
 
       // 获取总数
-      const totalResult = await this.db.query(`
+      const totalResult = await this.db.get(`
         SELECT COUNT(*) as total 
         FROM download_records dr
         LEFT JOIN shared_paths sp ON dr.shared_path_id = sp.id
         ${whereClause}
       `, params)
 
-      const total = totalResult[0].total
+      const total = totalResult.total
 
       res.json({
         success: true,
@@ -340,19 +340,19 @@ class SystemController {
       const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
 
       // 清理访问日志
-      const accessResult = await this.db.query(
+      const accessResult = await this.db.run(
         'DELETE FROM access_logs WHERE accessed_at < ?',
         [cutoffDate.toISOString()]
       )
 
       // 清理下载记录
-      const downloadResult = await this.db.query(
+      const downloadResult = await this.db.run(
         'DELETE FROM download_records WHERE downloaded_at < ?',
         [cutoffDate.toISOString()]
       )
 
       // 清理系统指标
-      const metricsResult = await this.db.query(
+      const metricsResult = await this.db.run(
         'DELETE FROM system_metrics WHERE created_at < ?',
         [cutoffDate.toISOString()]
       )
@@ -501,8 +501,8 @@ class SystemController {
 
       for (const table of tables) {
         try {
-          const result = await this.db.query(`SELECT COUNT(*) as count FROM ${table}`)
-          stats[table] = result[0].count
+          const result = await this.db.get(`SELECT COUNT(*) as count FROM ${table}`)
+          stats[table] = result.count
         } catch (error) {
           stats[table] = 0
         }
@@ -528,39 +528,39 @@ class SystemController {
       const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
 
       // 各时间段访问量
-      const hourlyAccess = await this.db.query(
+      const hourlyAccess = await this.db.get(
         'SELECT COUNT(*) as count FROM access_logs WHERE accessed_at > ?',
         [oneHourAgo.toISOString()]
       )
 
-      const dailyAccess = await this.db.query(
+      const dailyAccess = await this.db.get(
         'SELECT COUNT(*) as count FROM access_logs WHERE accessed_at > ?',
         [oneDayAgo.toISOString()]
       )
 
-      const weeklyAccess = await this.db.query(
+      const weeklyAccess = await this.db.get(
         'SELECT COUNT(*) as count FROM access_logs WHERE accessed_at > ?',
         [oneWeekAgo.toISOString()]
       )
 
       // 各时间段下载量
-      const hourlyDownloads = await this.db.query(
+      const hourlyDownloads = await this.db.get(
         'SELECT COUNT(*) as count FROM download_records WHERE downloaded_at > ?',
         [oneHourAgo.toISOString()]
       )
 
-      const dailyDownloads = await this.db.query(
+      const dailyDownloads = await this.db.get(
         'SELECT COUNT(*) as count FROM download_records WHERE downloaded_at > ?',
         [oneDayAgo.toISOString()]
       )
 
-      const weeklyDownloads = await this.db.query(
+      const weeklyDownloads = await this.db.get(
         'SELECT COUNT(*) as count FROM download_records WHERE downloaded_at > ?',
         [oneWeekAgo.toISOString()]
       )
 
       // 热门分享
-      const popularShares = await this.db.query(`
+      const popularShares = await this.db.all(`
         SELECT 
           sp.name,
           sp.id,
@@ -575,16 +575,16 @@ class SystemController {
 
       return {
         hourly: {
-          access: hourlyAccess[0].count,
-          downloads: hourlyDownloads[0].count
+          access: hourlyAccess.count,
+          downloads: hourlyDownloads.count
         },
         daily: {
-          access: dailyAccess[0].count,
-          downloads: dailyDownloads[0].count
+          access: dailyAccess.count,
+          downloads: dailyDownloads.count
         },
         weekly: {
-          access: weeklyAccess[0].count,
-          downloads: weeklyDownloads[0].count
+          access: weeklyAccess.count,
+          downloads: weeklyDownloads.count
         },
         popular_shares: popularShares
       }
@@ -635,4 +635,4 @@ class SystemController {
   }
 }
 
-module.exports = new SystemController() 
+module.exports = SystemController 

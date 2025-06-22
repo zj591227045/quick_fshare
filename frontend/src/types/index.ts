@@ -40,10 +40,12 @@ export interface SharePath {
 
 export interface CreateShareRequest {
   name: string
+  description?: string
   path: string
   type: 'local' | 'smb' | 'nfs'
   access_type: 'public' | 'password'
   password?: string
+  enabled?: boolean
   smb_config?: SMBConfig
   nfs_config?: NFSConfig
 }
@@ -86,6 +88,7 @@ export interface BrowseResponse {
       id: number
       name: string
       type: string
+      access_type?: string
     }
     pagination?: {
       limit: number
@@ -124,6 +127,56 @@ export interface SystemStats {
   disk_usage: number
   memory_usage: number
   cpu_usage: number
+  database?: {
+    connection_healthy: boolean
+  }
+  access?: {
+    daily: {
+      access: number
+      downloads: number
+    }
+    weekly: {
+      access: number
+      downloads: number
+    }
+  }
+  system?: {
+    cpu?: {
+      usage: number
+      count: number
+      model: string
+    }
+    memory?: {
+      usage_percentage: number
+      total: number
+      used: number
+      free: number
+    }
+    disk?: {
+      usage_percentage: number
+      total: string
+      used: string
+      available: string
+    }
+    system?: {
+      platform: string
+      hostname: string
+      uptime: number
+    }
+    application?: {
+      node_version: string
+      pid: number
+      uptime: number
+      memory: {
+        heap_used: number
+        heap_total: number
+      }
+    }
+    database?: {
+      connection_healthy: boolean
+      size_mb: number
+    }
+  }
 }
 
 // 访问日志类型
@@ -164,6 +217,6 @@ export interface BrowseParams {
 
 // 密码验证参数
 export interface PasswordVerifyRequest {
-  share_id: number
+  share_id: string | number
   password: string
 } 

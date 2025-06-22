@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS admins (
 -- 分享路径表
 CREATE TABLE IF NOT EXISTS shared_paths (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name VARCHAR(100) NOT NULL,
+    name VARCHAR(100) UNIQUE NOT NULL,
     description TEXT,
     path VARCHAR(500) NOT NULL,
     type VARCHAR(20) NOT NULL CHECK (type IN ('local', 'smb', 'nfs')),

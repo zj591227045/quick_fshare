@@ -106,7 +106,7 @@ const BrowsePage: React.FC = () => {
     setPasswordLoading(true);
     try {
       const response = await browseApi.verifyPassword({
-        share_id: parseInt(shareId),
+        share_id: shareId,
         password
       });
       
@@ -224,7 +224,7 @@ const BrowsePage: React.FC = () => {
       // console.log('=== 发送API请求 ===');
       // console.log('请求参数:', params);
       
-      const response = await browseApi.list(parseInt(shareId), params);
+      const response = await browseApi.list(shareId, params);
       
       if (response.success && response.data) {
         let newFiles = response.data.files || [];
@@ -378,8 +378,8 @@ const BrowsePage: React.FC = () => {
     try {
       message.loading({ content: `正在下载 ${file.name}...`, key: 'download' });
       
-      // 构建下载URL
-      const downloadUrl = `/api/browse/${shareId}/download${file.path}`;
+      // 使用API服务构建下载URL，正确传递token
+      const downloadUrl = browseApi.download(shareId!, file.path, accessToken || undefined);
       
       // 创建隐藏的下载链接
       const link = document.createElement('a');
@@ -722,7 +722,7 @@ const BrowsePage: React.FC = () => {
       <SearchModal
         visible={searchModalVisible}
         onClose={() => setSearchModalVisible(false)}
-        shareId={parseInt(shareId!)}
+        shareId={shareId!}
         shareName={shareInfo?.name}
         shareType={shareInfo?.type}
         onFileSelect={(file) => {

@@ -223,7 +223,13 @@ class ApiClient {
         data,
       }),
 
-    getStats: (id: number): Promise<ApiResponse<any>> =>
+    getStats: (): Promise<ApiResponse<any>> =>
+      this.request({
+        method: 'GET',
+        url: '/shares/stats',
+      }),
+
+    getShareStats: (id: number): Promise<ApiResponse<any>> =>
       this.request({
         method: 'GET',
         url: `/shares/${id}/stats`,
@@ -238,7 +244,7 @@ class ApiClient {
 
   // 文件浏览API
   browse = {
-    list: (shareId: number, params?: BrowseParams): Promise<BrowseResponse> =>
+    list: (shareId: string | number, params?: BrowseParams): Promise<BrowseResponse> =>
       this.request({
         method: 'GET',
         url: `/browse/${shareId}`,
@@ -253,19 +259,19 @@ class ApiClient {
         data,
       }),
 
-    download: (shareId: number, filePath: string, token?: string): string => {
+    download: (shareId: string | number, filePath: string, token?: string): string => {
       const params = new URLSearchParams()
       if (token) params.append('token', token)
       return `/api/browse/${shareId}/download${filePath}?${params.toString()}`
     },
 
-    getThumbnail: (shareId: number, filePath: string, token?: string): string => {
+    getThumbnail: (shareId: string | number, filePath: string, token?: string): string => {
       const params = new URLSearchParams()
       if (token) params.append('token', token)
       return `/api/thumbnail/${shareId}/${encodeURIComponent(filePath)}?${params.toString()}`
     },
 
-    search: (shareId: number, params: {
+    search: (shareId: string | number, params: {
       q: string;
       extensions?: string;
       type?: 'all' | 'file' | 'directory';
@@ -282,13 +288,13 @@ class ApiClient {
         skipAuth401: true, // 跳过401拦截，让组件自己处理密码验证
       }) as Promise<BrowseResponse>,
 
-    getSearchStatus: (shareId: number): Promise<ApiResponse<any>> =>
+    getSearchStatus: (shareId: string | number): Promise<ApiResponse<any>> =>
       this.request({
         method: 'GET',
         url: `/browse/${shareId}/search-status`,
       }),
 
-    rebuildIndex: (shareId: number): Promise<ApiResponse<any>> =>
+    rebuildIndex: (shareId: string | number): Promise<ApiResponse<any>> =>
       this.request({
         method: 'POST',
         url: `/browse/${shareId}/rebuild-index`,

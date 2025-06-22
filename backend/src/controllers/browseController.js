@@ -11,6 +11,28 @@ class BrowseController {
     this.fileSystemService = new FileSystemService()
     this.thumbnailService = new ThumbnailService()
   }
+
+  /**
+   * 通过ID或名称查找分享
+   */
+  async findShareByIdOrName(shareIdOrName, includePassword = false) {
+    // 如果是纯数字，优先按ID查找
+    if (/^\d+$/.test(shareIdOrName)) {
+      const shareById = await Share.findById(parseInt(shareIdOrName), includePassword)
+      if (shareById) {
+        return shareById
+      }
+    }
+    
+    // 否则按名称查找
+    const shareByName = await Share.findByName(shareIdOrName)
+    if (shareByName && includePassword) {
+      // 如果需要密码字段，重新查询
+      return await Share.findById(shareByName.id, true)
+    }
+    
+    return shareByName
+  }
   /**
    * 浏览分享路径的文件列表
    */
@@ -29,8 +51,8 @@ class BrowseController {
         shareId 
       })
 
-      // 获取分享配置
-      const share = await Share.findById(shareId)
+      // 获取分享配置（支持ID或名称）
+      const share = await this.findShareByIdOrName(shareId)
       if (!share) {
         return res.status(404).json({
           success: false,
@@ -56,9 +78,9 @@ class BrowseController {
       if (share.accessType === 'password') {
         const token = req.query.token || req.headers['x-access-token']
         console.log('收到的令牌:', token ? '[已提供]' : '[未提供]');
-        console.log('令牌验证结果:', token ? verifyTemporaryToken(token, shareId) : 'N/A');
+        console.log('令牌验证结果:', token ? verifyTemporaryToken(token, share.id) : 'N/A');
         
-        if (!token || !verifyTemporaryToken(token, shareId)) {
+        if (!token || !verifyTemporaryToken(token, share.id)) {
           console.log('密码验证失败，返回401');
           return res.status(401).json({
             success: false,
@@ -80,7 +102,7 @@ class BrowseController {
       })
 
       // 记录访问日志
-      await this.logAccess(shareId, clientIp, decodedPath || '/', 'browse')
+      await this.logAccess(share.id, clientIp, decodedPath || '/', 'browse')
 
       res.json({
         success: true,
@@ -123,7 +145,7 @@ class BrowseController {
         })
       }
 
-      const share = await Share.findById(share_id, true) // 包含密码字段
+      const share = await this.findShareByIdOrName(share_id, true) // 包含密码字段
       if (!share) {
         return res.status(404).json({
           success: false,
@@ -178,8 +200,8 @@ class BrowseController {
       const filePath = decodeURIComponent(req.params[0]) // 获取完整的文件路径
       const clientIp = req.ip || req.connection.remoteAddress
 
-      // 获取分享配置
-      const share = await Share.findById(shareId)
+      // 获取分享配置（支持ID或名称）
+      const share = await this.findShareByIdOrName(shareId)
       if (!share) {
         return res.status(404).json({
           success: false,
@@ -197,7 +219,7 @@ class BrowseController {
       // 检查密码保护
       if (share.accessType === 'password') {
         const token = req.query.token || req.headers['x-access-token']
-        if (!token || !verifyTemporaryToken(token, shareId)) {
+        if (!token || !verifyTemporaryToken(token, share.id)) {
           return res.status(401).json({
             success: false,
             message: '需要密码验证'
@@ -295,8 +317,8 @@ class BrowseController {
       }
 
       // 记录下载日志
-      await this.logAccess(shareId, clientIp, filePath, 'download')
-      await this.recordDownload(shareId, filePath, clientIp, fileInfo.size)
+      await this.logAccess(share.id, clientIp, filePath, 'download')
+      await this.recordDownload(share.id, filePath, clientIp, fileInfo.size)
 
       // 设置响应头
       res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileInfo.name)}"`)
@@ -362,8 +384,8 @@ class BrowseController {
       const filePath = decodeURIComponent(req.params[0])
       const size = req.query.size || 'medium'
 
-      // 获取分享配置
-      const share = await Share.findById(shareId)
+      // 获取分享配置（支持ID或名称）
+      const share = await this.findShareByIdOrName(shareId)
       if (!share) {
         return res.status(404).send('分享路径不存在')
       }
@@ -375,7 +397,7 @@ class BrowseController {
       // 检查密码保护
       if (share.accessType === 'password') {
         const token = req.query.token || req.headers['x-access-token']
-        if (!token || !verifyTemporaryToken(token, shareId)) {
+        if (!token || !verifyTemporaryToken(token, share.id)) {
           return res.status(401).send('需要密码验证')
         }
       }
@@ -440,8 +462,8 @@ class BrowseController {
         })
       }
 
-      // 获取分享配置
-      const share = await Share.findById(shareId)
+      // 获取分享配置（支持ID或名称）
+      const share = await this.findShareByIdOrName(shareId)
       if (!share) {
         return res.status(404).json({
           success: false,
@@ -459,7 +481,7 @@ class BrowseController {
       // 检查密码保护
       if (share.accessType === 'password') {
         const token = req.query.token || req.headers['x-access-token']
-        if (!token || !verifyTemporaryToken(token, shareId)) {
+        if (!token || !verifyTemporaryToken(token, share.id)) {
           return res.status(401).json({
             success: false,
             message: '需要密码验证'
@@ -482,7 +504,7 @@ class BrowseController {
       })
 
       // 记录搜索日志
-      await this.logAccess(shareId, clientIp, `search:${query}`, 'search')
+      await this.logAccess(share.id, clientIp, `search:${query}`, 'search')
 
       res.json({
         success: true,
@@ -517,8 +539,8 @@ class BrowseController {
     try {
       const { shareId } = req.params
 
-      // 获取分享配置
-      const share = await Share.findById(shareId)
+      // 获取分享配置（支持ID或名称）
+      const share = await this.findShareByIdOrName(shareId)
       if (!share) {
         return res.status(404).json({
           success: false,
@@ -560,8 +582,8 @@ class BrowseController {
     try {
       const { shareId } = req.params
 
-      // 获取分享配置
-      const share = await Share.findById(shareId)
+      // 获取分享配置（支持ID或名称）
+      const share = await this.findShareByIdOrName(shareId)
       if (!share) {
         return res.status(404).json({
           success: false,
@@ -841,8 +863,8 @@ class BrowseController {
       const { shareId } = req.params
       const filePath = decodeURIComponent(req.query.path || '')
 
-      // 获取分享配置
-      const share = await Share.findById(shareId)
+      // 获取分享配置（支持ID或名称）
+      const share = await this.findShareByIdOrName(shareId)
       if (!share) {
         return res.status(404).json({
           success: false,
@@ -860,7 +882,7 @@ class BrowseController {
       // 检查密码保护
       if (share.accessType === 'password') {
         const token = req.query.token || req.headers['x-access-token']
-        if (!token || !verifyTemporaryToken(token, shareId)) {
+        if (!token || !verifyTemporaryToken(token, share.id)) {
           return res.status(401).json({
             success: false,
             message: '需要密码验证'
@@ -929,11 +951,22 @@ class BrowseController {
     try {
       const dbManager = require('../config/database')
 
+      // 提取文件名
+      const fileName = filePath.split('/').pop() || filePath
+
       await dbManager.run(
-        `INSERT INTO access_logs (shared_path_id, client_ip, file_path, action, file_size, accessed_at)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [shareId, clientIp, filePath, 'download', fileSize, new Date().toISOString()]
+        `INSERT INTO download_records (shared_path_id, file_path, file_name, file_size, client_ip, completed, downloaded_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [shareId, filePath, fileName, fileSize, clientIp, 1, new Date().toISOString()]
       )
+
+      logger.info('下载记录已保存', {
+        shareId,
+        filePath,
+        fileName,
+        fileSize,
+        clientIp
+      })
     } catch (error) {
       logger.error('记录下载记录失败', { error: error.message })
     }

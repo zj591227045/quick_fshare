@@ -178,14 +178,41 @@ class Share {
         
         try {
             const share = await dbManager.get(
-                'SELECT id, name, description, path, type, access_type, enabled, sort_order, created_at, updated_at FROM shared_paths WHERE name = ?',
+                'SELECT id, name, description, path, type, access_type, enabled, sort_order, created_at, updated_at FROM shared_paths WHERE name = ? COLLATE NOCASE',
                 [name]
             );
+
+            if (!share) {
+                return null;
+            }
+
+            // 查询SMB配置
+            let smbConfig = null;
+            if (share.type === 'smb') {
+                smbConfig = await dbManager.get(
+                    'SELECT * FROM smb_configs WHERE shared_path_id = ?',
+                    [share.id]
+                );
+            }
+
+            // 查询NFS配置
+            let nfsConfig = null;
+            if (share.type === 'nfs') {
+                nfsConfig = await dbManager.get(
+                    'SELECT * FROM nfs_configs WHERE shared_path_id = ?',
+                    [share.id]
+                );
+            }
 
             const duration = Date.now() - startTime;
             logDatabase('SELECT', 'shared_paths', duration, { name });
 
-            return share ? new Share(share) : null;
+            // 创建Share实例
+            const shareInstance = new Share(share);
+            shareInstance.smbConfig = smbConfig;
+            shareInstance.nfsConfig = nfsConfig;
+
+            return shareInstance;
         } catch (error) {
             const duration = Date.now() - startTime;
             logDatabase('SELECT_ERROR', 'shared_paths', duration, { error: error.message });

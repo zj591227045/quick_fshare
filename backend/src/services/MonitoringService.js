@@ -3,11 +3,11 @@ const fs = require('fs').promises
 const path = require('path')
 const { execSync } = require('child_process')
 const logger = require('../utils/logger')
-const DatabaseManager = require('../config/database')
+const dbManager = require('../config/database')
 
 class MonitoringService {
   constructor() {
-    this.db = new DatabaseManager()
+    this.db = dbManager
     this.metrics = new Map()
     this.alertThresholds = {
       cpu: 80,           // CPU使用率阈值 (%)
@@ -396,8 +396,8 @@ class MonitoringService {
 
       for (const table of tables) {
         try {
-          const result = await this.db.query(`SELECT COUNT(*) as count FROM ${table}`)
-          stats[table] = result[0].count
+          const result = await this.db.get(`SELECT COUNT(*) as count FROM ${table}`)
+          stats[table] = result.count
         } catch (error) {
           stats[table] = 0
         }
@@ -453,31 +453,31 @@ class MonitoringService {
       const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
 
       // 最近1小时的访问量
-      const hourlyAccess = await this.db.query(
+      const hourlyAccess = await this.db.get(
         'SELECT COUNT(*) as count FROM access_logs WHERE accessed_at > ?',
         [oneHourAgo.toISOString()]
       )
 
       // 最近24小时的访问量
-      const dailyAccess = await this.db.query(
+      const dailyAccess = await this.db.get(
         'SELECT COUNT(*) as count FROM access_logs WHERE accessed_at > ?',
         [oneDayAgo.toISOString()]
       )
 
       // 最近1小时的下载量
-      const hourlyDownloads = await this.db.query(
+      const hourlyDownloads = await this.db.get(
         'SELECT COUNT(*) as count FROM download_records WHERE downloaded_at > ?',
         [oneHourAgo.toISOString()]
       )
 
       // 最近24小时的下载量
-      const dailyDownloads = await this.db.query(
+      const dailyDownloads = await this.db.get(
         'SELECT COUNT(*) as count FROM download_records WHERE downloaded_at > ?',
         [oneDayAgo.toISOString()]
       )
 
       // 热门分享路径
-      const popularShares = await this.db.query(`
+      const popularShares = await this.db.all(`
         SELECT sp.name, COUNT(*) as access_count 
         FROM access_logs al 
         JOIN shared_paths sp ON al.shared_path_id = sp.id 
@@ -489,10 +489,10 @@ class MonitoringService {
 
       return {
         access_stats: {
-          hourly_access: hourlyAccess[0].count,
-          daily_access: dailyAccess[0].count,
-          hourly_downloads: hourlyDownloads[0].count,
-          daily_downloads: dailyDownloads[0].count,
+          hourly_access: hourlyAccess.count,
+          daily_access: dailyAccess.count,
+          hourly_downloads: hourlyDownloads.count,
+          daily_downloads: dailyDownloads.count,
           popular_shares: popularShares
         }
       }
@@ -508,7 +508,7 @@ class MonitoringService {
   async storeMetrics(metrics) {
     try {
       // 创建系统指标表（如果不存在）
-      await this.db.query(`
+      await this.db.run(`
         CREATE TABLE IF NOT EXISTS system_metrics (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           timestamp TEXT NOT NULL,
@@ -529,7 +529,7 @@ class MonitoringService {
       `)
 
       // 插入指标数据
-      await this.db.query(`
+      await this.db.run(`
         INSERT INTO system_metrics (
           timestamp, cpu_usage, memory_usage, disk_usage,
           load_average_1m, load_average_5m, load_average_15m,
@@ -611,7 +611,7 @@ class MonitoringService {
    */
   async recordAlert(alert) {
     try {
-      await this.db.query(`
+      await this.db.run(`
         CREATE TABLE IF NOT EXISTS system_alerts (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           type TEXT NOT NULL,
@@ -625,7 +625,7 @@ class MonitoringService {
         )
       `)
 
-      await this.db.query(`
+      await this.db.run(`
         INSERT INTO system_alerts (type, level, message, value, threshold)
         VALUES (?, ?, ?, ?, ?)
       `, [alert.type, alert.level, alert.message, alert.value, alert.threshold])
@@ -642,7 +642,7 @@ class MonitoringService {
       const cutoffDate = new Date(Date.now() - this.retentionDays * 24 * 60 * 60 * 1000)
       
       // 清理数据库中的过期数据
-      await this.db.query(
+      await this.db.run(
         'DELETE FROM system_metrics WHERE created_at < ?',
         [cutoffDate.toISOString()]
       )
@@ -677,7 +677,7 @@ class MonitoringService {
     try {
       const startTime = new Date(Date.now() - hours * 60 * 60 * 1000)
       
-      const result = await this.db.query(`
+      const result = await this.db.all(`
         SELECT * FROM system_metrics 
         WHERE created_at > ? 
         ORDER BY created_at DESC
@@ -716,7 +716,7 @@ class MonitoringService {
    */
   async getAlerts(limit = 50) {
     try {
-      const result = await this.db.query(`
+      const result = await this.db.all(`
         SELECT * FROM system_alerts 
         ORDER BY created_at DESC 
         LIMIT ?

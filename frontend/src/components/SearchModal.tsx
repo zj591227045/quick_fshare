@@ -44,7 +44,7 @@ interface FileItem {
 interface SearchModalProps {
   visible: boolean;
   onClose: () => void;
-  shareId: number;
+  shareId: string | number;
   shareName?: string;
   shareType?: string;
   token?: string;

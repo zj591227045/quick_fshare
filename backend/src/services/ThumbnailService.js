@@ -228,10 +228,11 @@ class ThumbnailService {
         return true
       }
 
-      // 检查数据库缓存
-      const result = await this.db.query(
-        'SELECT * FROM thumbnail_cache WHERE file_path = ? AND size = ?',
-        [filePath, size]
+      // 检查数据库缓存 - 通过cache_path包含尺寸信息来判断
+      const expectedPath = this.getThumbnailPath(filePath, size)
+      const result = await this.db.all(
+        'SELECT * FROM thumbnail_cache WHERE file_path = ? AND cache_path = ?',
+        [filePath, expectedPath]
       )
 
       return result.length > 0
@@ -250,18 +251,19 @@ class ThumbnailService {
       
       // 检查内存缓存
       if (this.thumbnailCache.has(cacheKey)) {
-        return this.thumbnailCache.get(cacheKey).thumbnail_path
+        return this.thumbnailCache.get(cacheKey).cache_path
       }
 
       // 检查数据库缓存
-      const result = await this.db.query(
-        'SELECT thumbnail_path FROM thumbnail_cache WHERE file_path = ? AND size = ?',
-        [filePath, size]
+      const expectedPath = this.getThumbnailPath(filePath, size)
+      const result = await this.db.all(
+        'SELECT cache_path FROM thumbnail_cache WHERE file_path = ? AND cache_path = ?',
+        [filePath, expectedPath]
       )
 
       if (result.length > 0) {
-        const thumbnailPath = result[0].thumbnail_path
-        this.thumbnailCache.set(cacheKey, { thumbnail_path: thumbnailPath })
+        const thumbnailPath = result[0].cache_path
+        this.thumbnailCache.set(cacheKey, { cache_path: thumbnailPath })
         return thumbnailPath
       }
 
@@ -279,20 +281,29 @@ class ThumbnailService {
     try {
       const cacheKey = `${filePath}_${size}`
       const now = new Date().toISOString()
+      
+      // 获取文件hash和大小
+      const fileHash = this.generatePathHash(filePath)
+      let fileSize = 0
+      try {
+        const stats = await fs.stat(filePath)
+        fileSize = stats.size
+      } catch (error) {
+        logger.warn('获取文件大小失败', { filePath, error: error.message })
+      }
 
       // 更新数据库缓存
-      await this.db.query(
+      await this.db.run(
         `INSERT OR REPLACE INTO thumbnail_cache 
-         (file_path, size, thumbnail_path, created_at, accessed_at) 
+         (file_path, cache_path, file_hash, file_size, created_at) 
          VALUES (?, ?, ?, ?, ?)`,
-        [filePath, size, thumbnailPath, now, now]
+        [filePath, thumbnailPath, fileHash, fileSize, now]
       )
 
       // 更新内存缓存
       this.thumbnailCache.set(cacheKey, {
-        thumbnail_path: thumbnailPath,
-        created_at: now,
-        accessed_at: now
+        cache_path: thumbnailPath,
+        created_at: now
       })
 
       // 清理过期缓存
@@ -309,14 +320,17 @@ class ThumbnailService {
    */
   async loadCache() {
     try {
-      const result = await this.db.query(
-        'SELECT * FROM thumbnail_cache ORDER BY accessed_at DESC LIMIT ?',
+      const result = await this.db.all(
+        'SELECT * FROM thumbnail_cache ORDER BY created_at DESC LIMIT ?',
         [this.maxCacheSize]
       )
 
       this.thumbnailCache.clear()
       for (const row of result) {
-        const cacheKey = `${row.file_path}_${row.size}`
+        // 从cache_path推断size
+        const sizePart = path.basename(row.cache_path).split('_')[1]
+        const size = sizePart ? sizePart.split('.')[0] : 'medium'
+        const cacheKey = `${row.file_path}_${size}`
         this.thumbnailCache.set(cacheKey, row)
       }
 
@@ -332,33 +346,35 @@ class ThumbnailService {
   async cleanupCache() {
     try {
       // 清理超过限制数量的缓存
-      const count = await this.db.query('SELECT COUNT(*) as count FROM thumbnail_cache')
-      const totalCount = count[0].count
+      const countResult = await this.db.get('SELECT COUNT(*) as count FROM thumbnail_cache')
+      const totalCount = countResult.count
 
       if (totalCount > this.maxCacheSize) {
         const toDelete = totalCount - this.maxCacheSize
         
-        const oldRecords = await this.db.query(
-          'SELECT * FROM thumbnail_cache ORDER BY accessed_at ASC LIMIT ?',
+        const oldRecords = await this.db.all(
+          'SELECT * FROM thumbnail_cache ORDER BY created_at ASC LIMIT ?',
           [toDelete]
         )
 
         for (const record of oldRecords) {
           // 删除缩略图文件
           try {
-            await fs.unlink(record.thumbnail_path)
+            await fs.unlink(record.cache_path)
           } catch (error) {
             // 忽略文件删除错误
           }
 
           // 从数据库删除
-          await this.db.query(
+          await this.db.run(
             'DELETE FROM thumbnail_cache WHERE id = ?',
             [record.id]
           )
 
-          // 从内存缓存删除
-          const cacheKey = `${record.file_path}_${record.size}`
+          // 从内存缓存删除 - 推断size
+          const sizePart = path.basename(record.cache_path).split('_')[1]
+          const size = sizePart ? sizePart.split('.')[0] : 'medium'
+          const cacheKey = `${record.file_path}_${size}`
           this.thumbnailCache.delete(cacheKey)
         }
 
@@ -367,24 +383,27 @@ class ThumbnailService {
 
       // 清理超过30天的缓存
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-      const expiredRecords = await this.db.query(
+      const expiredRecords = await this.db.all(
         'SELECT * FROM thumbnail_cache WHERE created_at < ?',
         [thirtyDaysAgo]
       )
 
       for (const record of expiredRecords) {
         try {
-          await fs.unlink(record.thumbnail_path)
+          await fs.unlink(record.cache_path)
         } catch (error) {
           // 忽略文件删除错误
         }
 
-        await this.db.query(
+        await this.db.run(
           'DELETE FROM thumbnail_cache WHERE id = ?',
           [record.id]
         )
 
-        const cacheKey = `${record.file_path}_${record.size}`
+        // 从内存缓存删除
+        const sizePart = path.basename(record.cache_path).split('_')[1]
+        const size = sizePart ? sizePart.split('.')[0] : 'medium'
+        const cacheKey = `${record.file_path}_${size}`
         this.thumbnailCache.delete(cacheKey)
       }
 
@@ -429,17 +448,14 @@ class ThumbnailService {
    */
   async getCacheStats() {
     try {
-      const result = await this.db.query(`
+      const result = await this.db.get(`
         SELECT 
           COUNT(*) as total_count,
-          COUNT(DISTINCT file_path) as unique_files,
-          AVG(CASE WHEN size = 'small' THEN 1 ELSE 0 END) * COUNT(*) as small_count,
-          AVG(CASE WHEN size = 'medium' THEN 1 ELSE 0 END) * COUNT(*) as medium_count,
-          AVG(CASE WHEN size = 'large' THEN 1 ELSE 0 END) * COUNT(*) as large_count
+          COUNT(DISTINCT file_path) as unique_files
         FROM thumbnail_cache
       `)
 
-      const stats = result[0]
+      const stats = result
       
       // 计算缓存目录大小
       let totalSize = 0
@@ -459,12 +475,7 @@ class ThumbnailService {
         unique_files: stats.unique_files,
         cache_size_bytes: totalSize,
         cache_size_mb: (totalSize / 1024 / 1024).toFixed(2),
-        memory_cache_size: this.thumbnailCache.size,
-        size_distribution: {
-          small: Math.round(stats.small_count),
-          medium: Math.round(stats.medium_count),
-          large: Math.round(stats.large_count)
-        }
+        memory_cache_size: this.thumbnailCache.size
       }
     } catch (error) {
       logger.error('获取缓存统计失败', { error: error.message })
@@ -485,7 +496,7 @@ class ThumbnailService {
       }
 
       // 清空数据库缓存
-      await this.db.query('DELETE FROM thumbnail_cache')
+      await this.db.run('DELETE FROM thumbnail_cache')
 
       // 清空内存缓存
       this.thumbnailCache.clear()

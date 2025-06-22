@@ -48,11 +48,13 @@ app.get('/api/health', (req, res) => {
 const authRoutes = require('./src/routes/auth');
 const sharesRoutes = require('./src/routes/shares');
 const browseRoutes = require('./src/routes/browse');
+const systemRoutes = require('./src/routes/system');
 
 // API路由
 app.use('/api/auth', authRoutes);
 app.use('/api/shares', sharesRoutes);
 app.use('/api/browse', browseRoutes);
+app.use('/api/system', systemRoutes);
 
 // 错误处理
 app.use((err, req, res, next) => {
@@ -83,6 +85,16 @@ async function startServer() {
     const searchIndexService = getSearchIndexService();
     await searchIndexService.init();
     console.log('✅ 搜索索引服务初始化成功');
+    
+    // 启动监控服务
+    try {
+      const MonitoringService = require('./src/services/MonitoringService');
+      const monitoringService = new MonitoringService();
+      monitoringService.startCollection();
+      console.log('✅ 系统监控服务已启动');
+    } catch (error) {
+      console.error('❌ 启动监控服务失败:', error.message);
+    }
     
     // 启动HTTP服务器
     app.listen(PORT, () => {

@@ -247,51 +247,56 @@ const SettingsPage: React.FC = () => {
       key: 'database',
       label: (
         <Space>
-          <DatabaseOutlined />
-          <span>数据库设置</span>
+          <DatabaseOutlined style={{ color: 'var(--text-primary)' }} />
+          <span style={{ color: 'var(--text-primary)' }}>数据库设置</span>
         </Space>
       ),
       children: (
-        <Card>
+        <Card style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-secondary)' }}>
           <Form
             layout="vertical"
             initialValues={{
-              dbHost: 'localhost',
-              dbPort: 5432,
-              dbName: 'quick_fshare',
+              dbType: 'SQLite',
+              dbPath: '/data/quickfshare.db',
               enableBackup: true,
               backupFrequency: 'daily',
+              maxBackupFiles: 7,
+              enableVacuum: true,
+              vacuumFrequency: 'weekly',
             }}
           >
             <Form.Item
-              name="dbHost"
-              label="数据库主机"
+              label={<span style={{ color: 'var(--text-primary)' }}>数据库类型</span>}
             >
-              <Input placeholder="请输入数据库主机地址" />
-            </Form.Item>
-
-            <Form.Item
-              name="dbPort"
-              label="数据库端口"
-            >
-              <InputNumber 
-                min={1} 
-                max={65535} 
-                style={{ width: '100%' }}
-                placeholder="请输入数据库端口"
+              <Input 
+                value="SQLite" 
+                disabled 
+                style={{ 
+                  backgroundColor: 'var(--bg-secondary)', 
+                  borderColor: 'var(--border-color)',
+                  color: 'var(--text-secondary)'
+                }}
               />
             </Form.Item>
 
             <Form.Item
-              name="dbName"
-              label="数据库名称"
+              name="dbPath"
+              label={<span style={{ color: 'var(--text-primary)' }}>数据库文件路径</span>}
             >
-              <Input placeholder="请输入数据库名称" />
+              <Input 
+                placeholder="数据库文件路径" 
+                disabled
+                style={{ 
+                  backgroundColor: 'var(--bg-secondary)', 
+                  borderColor: 'var(--border-color)',
+                  color: 'var(--text-secondary)'
+                }}
+              />
             </Form.Item>
 
             <Form.Item
               name="enableBackup"
-              label="启用自动备份"
+              label={<span style={{ color: 'var(--text-primary)' }}>启用自动备份</span>}
               valuePropName="checked"
             >
               <Switch />
@@ -299,9 +304,15 @@ const SettingsPage: React.FC = () => {
 
             <Form.Item
               name="backupFrequency"
-              label="备份频率"
+              label={<span style={{ color: 'var(--text-primary)' }}>备份频率</span>}
             >
-              <Select placeholder="请选择备份频率">
+              <Select 
+                placeholder="请选择备份频率"
+                style={{ 
+                  backgroundColor: 'var(--bg-secondary)', 
+                  borderColor: 'var(--border-color)'
+                }}
+              >
                 <Option value="hourly">每小时</Option>
                 <Option value="daily">每天</Option>
                 <Option value="weekly">每周</Option>
@@ -309,10 +320,70 @@ const SettingsPage: React.FC = () => {
               </Select>
             </Form.Item>
 
+            <Form.Item
+              name="maxBackupFiles"
+              label={<span style={{ color: 'var(--text-primary)' }}>最大备份文件数</span>}
+            >
+              <InputNumber 
+                min={1} 
+                max={30} 
+                style={{ 
+                  width: '100%',
+                  backgroundColor: 'var(--bg-secondary)', 
+                  borderColor: 'var(--border-color)',
+                  color: 'var(--text-primary)'
+                }}
+                placeholder="保留的备份文件数量"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="enableVacuum"
+              label={<span style={{ color: 'var(--text-primary)' }}>启用数据库优化</span>}
+              valuePropName="checked"
+            >
+              <Switch />
+            </Form.Item>
+
+            <Form.Item
+              name="vacuumFrequency"
+              label={<span style={{ color: 'var(--text-primary)' }}>优化频率</span>}
+            >
+              <Select 
+                placeholder="请选择优化频率"
+                style={{ 
+                  backgroundColor: 'var(--bg-secondary)', 
+                  borderColor: 'var(--border-color)'
+                }}
+              >
+                <Option value="daily">每天</Option>
+                <Option value="weekly">每周</Option>
+                <Option value="monthly">每月</Option>
+              </Select>
+            </Form.Item>
+
             <Form.Item>
-              <Button type="primary" htmlType="submit">
-                保存数据库设置
-              </Button>
+              <Space>
+                <Button type="primary" htmlType="submit" loading={loading}>
+                  保存数据库设置
+                </Button>
+                <Button 
+                  style={{ 
+                    borderColor: 'var(--border-color)', 
+                    color: 'var(--text-primary)' 
+                  }}
+                >
+                  立即备份
+                </Button>
+                <Button 
+                  style={{ 
+                    borderColor: 'var(--border-color)', 
+                    color: 'var(--text-primary)' 
+                  }}
+                >
+                  优化数据库
+                </Button>
+              </Space>
             </Form.Item>
           </Form>
         </Card>
@@ -322,12 +393,12 @@ const SettingsPage: React.FC = () => {
       key: 'notifications',
       label: (
         <Space>
-          <BellOutlined />
-          <span>通知设置</span>
+          <BellOutlined style={{ color: 'var(--text-primary)' }} />
+          <span style={{ color: 'var(--text-primary)' }}>通知设置</span>
         </Space>
       ),
       children: (
-        <Card>
+        <Card style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-secondary)' }}>
           <Form
             layout="vertical"
             initialValues={{
@@ -338,7 +409,7 @@ const SettingsPage: React.FC = () => {
           >
             <Form.Item
               name="enableEmailNotifications"
-              label="启用邮件通知"
+              label={<span style={{ color: 'var(--text-primary)' }}>启用邮件通知</span>}
               valuePropName="checked"
             >
               <Switch />
@@ -346,14 +417,21 @@ const SettingsPage: React.FC = () => {
 
             <Form.Item
               name="emailServer"
-              label="邮件服务器"
+              label={<span style={{ color: 'var(--text-primary)' }}>邮件服务器</span>}
             >
-              <Input placeholder="请输入邮件服务器地址" />
+              <Input 
+                placeholder="请输入邮件服务器地址" 
+                style={{ 
+                  backgroundColor: 'var(--bg-secondary)', 
+                  borderColor: 'var(--border-color)',
+                  color: 'var(--text-primary)'
+                }}
+              />
             </Form.Item>
 
             <Form.Item
               name="enableSystemAlerts"
-              label="启用系统警报"
+              label={<span style={{ color: 'var(--text-primary)' }}>启用系统警报</span>}
               valuePropName="checked"
             >
               <Switch />
@@ -361,18 +439,23 @@ const SettingsPage: React.FC = () => {
 
             <Form.Item
               name="alertThreshold"
-              label="警报阈值 (%)"
+              label={<span style={{ color: 'var(--text-primary)' }}>警报阈值 (%)</span>}
             >
               <InputNumber 
                 min={1} 
                 max={100} 
-                style={{ width: '100%' }}
+                style={{ 
+                  width: '100%',
+                  backgroundColor: 'var(--bg-secondary)', 
+                  borderColor: 'var(--border-color)',
+                  color: 'var(--text-primary)'
+                }}
                 placeholder="请输入警报阈值"
               />
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit">
+              <Button type="primary" htmlType="submit" loading={loading}>
                 保存通知设置
               </Button>
             </Form.Item>
