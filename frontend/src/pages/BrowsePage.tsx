@@ -6,7 +6,6 @@ import {
   Space, 
   Typography, 
   Breadcrumb, 
-  Upload, 
   Spin, 
   App,
   Row,
@@ -17,19 +16,17 @@ import {
   Tag,
   Avatar,
   List,
-  Switch
+  Switch,
+  Modal
 } from 'antd';
 import { 
   FolderOutlined, 
   FileOutlined, 
   DownloadOutlined, 
-  UploadOutlined,
   HomeOutlined,
   SearchOutlined,
   AppstoreOutlined,
   BarsOutlined,
-  SortAscendingOutlined,
-  SortDescendingOutlined,
   FileImageOutlined,
   VideoCameraOutlined,
   FilePdfOutlined,
@@ -40,10 +37,13 @@ import {
   FileTextOutlined,
   DatabaseOutlined,
   CloudServerOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  LockOutlined
 } from '@ant-design/icons';
 import { useParams } from 'react-router-dom';
 import { browseApi } from '../services/api';
+import { useTheme } from '@/contexts/ThemeContext';
+import SearchModal from '@/components/SearchModal';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -67,22 +67,82 @@ interface ShareInfo {
   access_type: string;
 }
 
+interface PaginationInfo {
+  limit: number;
+  offset: number;
+  total: number;
+  has_more: boolean;
+  current_page: number;
+  total_pages: number;
+}
+
 const BrowsePage: React.FC = () => {
   const { shareId } = useParams();
+  const { actualMode } = useTheme();
   const [currentPath, setCurrentPath] = useState('/');
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [shareInfo, setShareInfo] = useState<ShareInfo | null>(null);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const { message } = App.useApp();
+
+  // 验证分享密码
+  const verifySharePassword = async (password: string) => {
+    if (!shareId) return false;
+    
+    console.log('=== 密码验证开始 ===');
+    console.log('shareId:', shareId);
+    console.log('password:', password);
+    
+    setPasswordLoading(true);
+    try {
+      const response = await browseApi.verifyPassword({
+        share_id: parseInt(shareId),
+        password
+      });
+      
+      console.log('=== 密码验证响应 ===');
+      console.log('response:', response);
+      
+      if (response.success && response.data?.token) {
+        console.log('=== 密码验证成功 ===');
+        console.log('收到token:', response.data.token);
+        setAccessToken(response.data.token);
+        setPasswordModalVisible(false);
+        
+        // 验证成功后重新加载文件列表，直接传递token
+        console.log('=== 准备重新加载文件列表 ===');
+        await loadFiles(currentPath, true, 0, response.data.token);
+        return true;
+      } else {
+        console.log('=== 密码验证失败 ===');
+        console.log('response.message:', response.message);
+        message.error(response.message || '密码错误');
+        return false;
+      }
+    } catch (error) {
+      console.log('=== 密码验证异常 ===');
+      console.log('error:', error);
+      message.error('密码验证失败');
+      return false;
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
 
   // 获取文件图标
   const getFileIcon = (file: FileItem) => {
     if (file.type === 'directory') {
-      return <FolderOutlined style={{ color: '#1890ff', fontSize: '20px' }} />;
+      return <FolderOutlined style={{ color: 'var(--primary-color)', fontSize: '20px' }} />;
     }
 
     const ext = file.extension?.toLowerCase() || '';
@@ -107,13 +167,13 @@ const BrowsePage: React.FC = () => {
       return <FilePptOutlined style={{ ...iconStyle, color: '#fa8c16' }} />;
     }
     if (['.zip', '.rar', '.7z', '.tar', '.gz'].includes(ext)) {
-      return <FileZipOutlined style={{ ...iconStyle, color: '#8c8c8c' }} />;
+      return <FileZipOutlined style={{ ...iconStyle, color: actualMode === 'dark' ? '#bfbfbf' : '#8c8c8c' }} />;
     }
     if (['.txt', '.md', '.log'].includes(ext)) {
-      return <FileTextOutlined style={{ ...iconStyle, color: '#8c8c8c' }} />;
+      return <FileTextOutlined style={{ ...iconStyle, color: actualMode === 'dark' ? '#bfbfbf' : '#8c8c8c' }} />;
     }
     
-    return <FileOutlined style={{ ...iconStyle, color: '#8c8c8c' }} />;
+    return <FileOutlined style={{ ...iconStyle, color: actualMode === 'dark' ? '#bfbfbf' : '#8c8c8c' }} />;
   };
 
   // 格式化文件大小
@@ -126,45 +186,188 @@ const BrowsePage: React.FC = () => {
   };
 
   // 加载文件列表
-  const loadFiles = async (path = '/') => {
+  const loadFiles = async (path = '/', reset = true, offset = 0, token?: string) => {
     if (!shareId) return;
     
-    setLoading(true);
+    // console.log('=== loadFiles 开始 ===');
+    // console.log('shareId:', shareId);
+    // console.log('path:', path);
+    // console.log('accessToken:', accessToken);
+    
+    if (reset) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+    
     try {
-      const response = await browseApi.list(parseInt(shareId), { 
+      const params: any = { 
         path,
-        sort: sortBy,
+        sort: sortBy as 'name' | 'size' | 'modified',
         order: sortOrder,
-        search: searchQuery
-      });
+        search: searchQuery,
+        limit: 200,
+        offset
+      };
+
+      // 如果有访问令牌，添加到请求中
+      const finalToken = token || accessToken;
+      if (finalToken) {
+        params.token = finalToken;
+        // console.log('=== 添加token到请求参数 ===');
+        // console.log('params.token:', params.token);
+      }
+      // else {
+      //   console.log('=== 没有token ===');
+      // }
+
+      // console.log('=== 发送API请求 ===');
+      // console.log('请求参数:', params);
+      
+      const response = await browseApi.list(parseInt(shareId), params);
       
       if (response.success && response.data) {
-        setFiles(response.data.files || []);
-        setShareInfo(response.data.share_info);
+        let newFiles = response.data.files || [];
+        
+        // 前端排序优化
+        newFiles.sort((a, b) => {
+          let comparison = 0;
+          
+          // 文件夹优先
+          if (a.type !== b.type) {
+            return a.type === 'directory' ? -1 : 1;
+          }
+          
+          switch (sortBy) {
+            case 'name':
+              comparison = a.name.localeCompare(b.name, 'zh', { numeric: true });
+              break;
+            case 'size':
+              comparison = a.size - b.size;
+              break;
+            case 'modified':
+              comparison = new Date(a.modified).getTime() - new Date(b.modified).getTime();
+              break;
+            default:
+              comparison = a.name.localeCompare(b.name, 'zh', { numeric: true });
+          }
+          
+          return sortOrder === 'desc' ? -comparison : comparison;
+        });
+        
+        if (reset) {
+          setFiles(newFiles);
+        } else {
+          // 追加新文件，避免重复
+          setFiles(prevFiles => {
+            const existingPaths = new Set(prevFiles.map(f => f.path));
+            const uniqueNewFiles = newFiles.filter(f => !existingPaths.has(f.path));
+            const allFiles = [...prevFiles, ...uniqueNewFiles];
+            
+            // 重新排序所有文件
+            return allFiles.sort((a, b) => {
+              let comparison = 0;
+              
+              if (a.type !== b.type) {
+                return a.type === 'directory' ? -1 : 1;
+              }
+              
+              switch (sortBy) {
+                case 'name':
+                  comparison = a.name.localeCompare(b.name, 'zh', { numeric: true });
+                  break;
+                case 'size':
+                  comparison = a.size - b.size;
+                  break;
+                case 'modified':
+                  comparison = new Date(a.modified).getTime() - new Date(b.modified).getTime();
+                  break;
+                default:
+                  comparison = a.name.localeCompare(b.name, 'zh', { numeric: true });
+              }
+              
+              return sortOrder === 'desc' ? -comparison : comparison;
+            });
+          });
+        }
+        
+        if (response.data.share_info) {
+          setShareInfo({
+            ...response.data.share_info,
+            type: response.data.share_info.type as 'local' | 'smb' | 'nfs',
+            access_type: response.data.share_info.access_type || 'public'
+          });
+        }
+        if (response.data.pagination) {
+          setPagination(response.data.pagination);
+        }
+      } else if (response.message === '需要密码验证' || (response as any).require_password) {
+        // 需要密码验证
+        setPasswordModalVisible(true);
       } else {
         message.error(response.message || '加载文件列表失败');
       }
-    } catch (error) {
-      message.error('加载文件列表失败');
+    } catch (error: any) {
+      console.log('=== loadFiles 错误详情 ===');
+      console.log('错误对象:', error);
+      console.log('响应状态:', error.response?.status);
+      console.log('响应数据:', error.response?.data);
+      
+      // 检查是否是401错误（需要密码验证）
+      if (error.response?.status === 401) {
+        console.log('收到401错误，显示密码框');
+        setPasswordModalVisible(true);
+      } else if (error.response?.data?.require_password) {
+        console.log('API返回需要密码验证，显示密码框');
+        setPasswordModalVisible(true);
+      } else {
+        console.log('其他错误:', error.message);
+        message.error('加载文件列表失败: ' + (error.message || '未知错误'));
+      }
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
+  };
+
+  // 加载更多文件
+  const loadMoreFiles = async () => {
+    if (!pagination || !pagination.has_more || loadingMore) return;
+    
+    const nextOffset = pagination.offset + pagination.limit;
+    await loadFiles(currentPath, false, nextOffset, accessToken || undefined);
   };
 
   // 组件加载时获取文件列表
   useEffect(() => {
-    loadFiles(currentPath);
+    loadFiles(currentPath, true, 0);
   }, [shareId, currentPath, sortBy, sortOrder]);
 
   // 搜索时重新加载
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (searchQuery !== '') {
-        loadFiles(currentPath);
-      }
+      loadFiles(currentPath, true, 0);
     }, 500);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // 无限滚动检测
+  useEffect(() => {
+    const handleScroll = () => {
+      // 检查是否接近页面底部
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.offsetHeight;
+      
+      // 当滚动到距离底部200px时开始加载更多
+      if (scrollTop + windowHeight >= documentHeight - 200) {
+        loadMoreFiles();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [pagination, loadingMore]);
 
   const handleFolderClick = (folder: FileItem) => {
     const newPath = folder.path;
@@ -193,14 +396,14 @@ const BrowsePage: React.FC = () => {
     }
   };
 
-  const handleUpload = (info: any) => {
-    if (info.file.status === 'done') {
-      message.success(`${info.file.name} 上传成功`);
-      loadFiles(currentPath); // 重新加载文件列表
-    } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} 上传失败`);
-    }
-  };
+  // const handleUpload = (info: any) => {
+  //   if (info.file.status === 'done') {
+  //     message.success(`${info.file.name} 上传成功`);
+  //     loadFiles(currentPath); // 重新加载文件列表
+  //   } else if (info.file.status === 'error') {
+  //     message.error(`${info.file.name} 上传失败`);
+  //   }
+  // };
 
   // 生成面包屑导航
   const pathSegments = currentPath.split('/').filter(Boolean);
@@ -210,7 +413,7 @@ const BrowsePage: React.FC = () => {
         <Tooltip title="返回根目录">
           <HomeOutlined 
             onClick={() => setCurrentPath('/')} 
-            style={{ cursor: 'pointer', color: '#1890ff' }} 
+            style={{ cursor: 'pointer', color: 'var(--primary-color)' }} 
           />
         </Tooltip>
       )
@@ -218,7 +421,7 @@ const BrowsePage: React.FC = () => {
     ...pathSegments.map((segment, index) => ({
       title: (
         <span
-          style={{ cursor: 'pointer', color: '#1890ff' }}
+          style={{ cursor: 'pointer', color: 'var(--primary-color)' }}
           onClick={() => {
             const newPath = '/' + pathSegments.slice(0, index + 1).join('/');
             setCurrentPath(newPath);
@@ -242,7 +445,7 @@ const BrowsePage: React.FC = () => {
           <span
             style={{ 
               cursor: record.type === 'directory' ? 'pointer' : 'default',
-              color: record.type === 'directory' ? '#1890ff' : 'inherit',
+              color: record.type === 'directory' ? 'var(--primary-color)' : 'var(--text-primary)',
               fontWeight: record.type === 'directory' ? 500 : 'normal'
             }}
             onClick={() => record.type === 'directory' && handleFolderClick(record)}
@@ -250,7 +453,7 @@ const BrowsePage: React.FC = () => {
             {text}
           </span>
           {record.extension && (
-            <Tag size="small" color="blue">{record.extension}</Tag>
+            <Tag color="blue">{record.extension}</Tag>
           )}
         </Space>
       ),
@@ -332,7 +535,14 @@ const BrowsePage: React.FC = () => {
   );
 
   return (
-    <div style={{ padding: '16px', height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ 
+      padding: '16px', 
+      height: '100vh', 
+      display: 'flex', 
+      flexDirection: 'column',
+      background: 'var(--bg-color)',
+      color: 'var(--text-primary)'
+    }}>
       {/* 头部区域 */}
       <div style={{ marginBottom: 16 }}>
         <Row align="middle" justify="space-between" style={{ marginBottom: 16 }}>
@@ -344,10 +554,10 @@ const BrowsePage: React.FC = () => {
                   shareInfo?.type === 'smb' ? <DatabaseOutlined /> :
                   <CloudServerOutlined />
                 } 
-                style={{ backgroundColor: '#1890ff' }}
+                style={{ backgroundColor: 'var(--primary-color)' }}
               />
               <div>
-                <Title level={4} style={{ margin: 0 }}>
+                <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>
                   {shareInfo?.name || `分享 ${shareId}`}
                 </Title>
                 <Text type="secondary">
@@ -391,6 +601,15 @@ const BrowsePage: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 prefix={<SearchOutlined />}
               />
+              <Tooltip title="高级搜索">
+                <Button 
+                  icon={<SearchOutlined />}
+                  onClick={() => setSearchModalVisible(true)}
+                  type="dashed"
+                >
+                  高级搜索
+                </Button>
+              </Tooltip>
               <Select
                 value={`${sortBy}-${sortOrder}`}
                 style={{ width: 120 }}
@@ -414,38 +633,162 @@ const BrowsePage: React.FC = () => {
 
       {/* 主内容区域 */}
       <Card 
-        style={{ flex: 1, overflow: 'hidden' }}
-        bodyStyle={{ padding: '16px', height: '100%', overflow: 'auto' }}
+        style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+        styles={{ body: { padding: '16px', height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' } }}
       >
-        <Spin spinning={loading}>
-          {files.length === 0 && !loading ? (
-            <div style={{ textAlign: 'center', padding: '50px' }}>
-              <FolderOutlined style={{ fontSize: '48px', color: '#d9d9d9' }} />
-              <div style={{ marginTop: 16, color: '#8c8c8c' }}>
-                {searchQuery ? '没有找到匹配的文件' : '此文件夹为空'}
+        {/* 分页信息 */}
+        {pagination && (
+          <div style={{ 
+            marginBottom: 16, 
+            padding: '8px 0', 
+            borderBottom: '1px solid var(--border-color)',
+            color: 'var(--text-secondary)'
+          }}>
+            显示 {files.length} / {pagination.total} 个文件
+            {pagination.has_more && (
+              <Text type="secondary"> · 还有更多文件，向下滚动加载</Text>
+            )}
+          </div>
+        )}
+
+        {/* 文件列表 */}
+        <div style={{ flex: 1, overflow: 'auto' }}>
+          <Spin spinning={loading}>
+            {files.length === 0 && !loading ? (
+              <div style={{ textAlign: 'center', padding: '50px' }}>
+                <FolderOutlined style={{ 
+                  fontSize: '48px', 
+                  color: actualMode === 'dark' ? '#4a4a4a' : '#d9d9d9' 
+                }} />
+                <div style={{ 
+                  marginTop: 16, 
+                  color: 'var(--text-secondary)' 
+                }}>
+                  {searchQuery ? '没有找到匹配的文件' : '此文件夹为空'}
+                </div>
               </div>
+            ) : viewMode === 'table' ? (
+              <Table
+                columns={columns}
+                dataSource={files}
+                rowKey="path"
+                pagination={false}
+                size="small"
+              />
+            ) : (
+              renderGridView()
+            )}
+          </Spin>
+
+          {/* 加载更多区域 */}
+          {pagination && pagination.has_more && (
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '20px',
+              borderTop: files.length > 0 ? '1px solid var(--border-color)' : 'none'
+            }}>
+              {loadingMore ? (
+                <Space>
+                  <Spin size="small" />
+                  <Text type="secondary">正在加载更多文件...</Text>
+                </Space>
+              ) : (
+                <Button 
+                  type="link" 
+                  onClick={loadMoreFiles}
+                  icon={<ReloadOutlined />}
+                >
+                  点击加载更多 ({pagination.total - files.length} 个剩余)
+                </Button>
+              )}
             </div>
-          ) : viewMode === 'table' ? (
-            <Table
-              columns={columns}
-              dataSource={files}
-              rowKey="path"
-              pagination={{
-                total: files.length,
-                pageSize: 50,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total) => `共 ${total} 项`
-              }}
-              size="small"
-            />
-          ) : (
-            renderGridView()
           )}
-        </Spin>
+
+          {/* 完成提示 */}
+          {pagination && !pagination.has_more && files.length > 0 && (
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '20px',
+              color: 'var(--text-secondary)',
+              borderTop: '1px solid var(--border-color)'
+            }}>
+              <Text type="secondary">已显示全部 {pagination.total} 个文件</Text>
+            </div>
+          )}
+        </div>
       </Card>
+
+      {/* 搜索模态框 */}
+      <SearchModal
+        visible={searchModalVisible}
+        onClose={() => setSearchModalVisible(false)}
+        shareId={parseInt(shareId!)}
+        shareName={shareInfo?.name}
+        shareType={shareInfo?.type}
+        onFileSelect={(file) => {
+          // 如果选中文件，导航到该文件的父目录
+          const pathParts = file.path.split('/').filter(Boolean);
+          if (pathParts.length > 1) {
+            const parentPath = '/' + pathParts.slice(0, -1).join('/');
+            setCurrentPath(parentPath);
+          } else {
+            setCurrentPath('/');
+          }
+          message.success(`已导航到文件: ${file.name}`);
+        }}
+      />
+
+      {/* 密码验证模态框 */}
+      <Modal
+        title={
+          <Space>
+            <LockOutlined />
+            输入访问密码
+          </Space>
+        }
+        open={passwordModalVisible}
+        onCancel={() => setPasswordModalVisible(false)}
+        footer={null}
+        width={400}
+        centered
+      >
+        <div style={{ padding: '20px 0' }}>
+          <Input.Password
+            placeholder="请输入访问密码"
+            size="large"
+            onPressEnter={(e) => {
+              const value = (e.target as HTMLInputElement).value;
+              if (value.trim()) {
+                verifySharePassword(value.trim());
+              }
+            }}
+            suffix={
+              <Button
+                type="primary"
+                loading={passwordLoading}
+                onClick={() => {
+                  const input = document.querySelector('.ant-input[type="password"]') as HTMLInputElement;
+                  const value = input?.value;
+                  if (value?.trim()) {
+                    verifySharePassword(value.trim());
+                  }
+                }}
+              >
+                验证
+              </Button>
+            }
+          />
+          <div style={{ 
+            marginTop: 16, 
+            color: 'var(--text-secondary)', 
+            fontSize: '14px' 
+          }}>
+            此分享需要密码才能访问，请输入正确的访问密码。
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
 
-export default BrowsePage; 
+export default BrowsePage;

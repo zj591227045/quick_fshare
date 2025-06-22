@@ -24,7 +24,7 @@ class ApiClient {
 
   constructor() {
     this.client = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
+      baseURL: (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:3001/api',
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
@@ -52,6 +52,11 @@ class ApiClient {
       (response) => response,
       async (error) => {
         const originalRequest = error.config
+
+        // 如果是浏览相关的请求，不处理401错误，让组件自己处理
+        if (originalRequest.skipAuth401 && error.response?.status === 401) {
+          return Promise.reject(error)
+        }
 
         if (error.response?.status === 401 && !originalRequest._retry) {
           if (this.refreshing) {
@@ -111,10 +116,8 @@ class ApiClient {
     )
   }
 
-  private async request<T = any>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  private async request<T = any>(config: AxiosRequestConfig & { skipAuth401?: boolean }): Promise<ApiResponse<T>> {
     try {
-
-      
       const response: AxiosResponse<ApiResponse<T>> = await this.client(config)
       return response.data
     } catch (error: any) {
@@ -240,7 +243,8 @@ class ApiClient {
         method: 'GET',
         url: `/browse/${shareId}`,
         params,
-      }),
+        skipAuth401: true, // 跳过401拦截，让组件自己处理密码验证
+      }) as Promise<BrowseResponse>,
 
     verifyPassword: (data: PasswordVerifyRequest): Promise<ApiResponse<{ token: string }>> =>
       this.request({
@@ -261,11 +265,33 @@ class ApiClient {
       return `/api/thumbnail/${shareId}/${encodeURIComponent(filePath)}?${params.toString()}`
     },
 
-    search: (shareId: number, query: string, token?: string): Promise<BrowseResponse> =>
+    search: (shareId: number, params: {
+      q: string;
+      extensions?: string;
+      type?: 'all' | 'file' | 'directory';
+      sort?: 'relevance' | 'name' | 'size' | 'modified';
+      order?: 'asc' | 'desc';
+      limit?: number;
+      offset?: number;
+      token?: string;
+    }): Promise<BrowseResponse> =>
       this.request({
         method: 'GET',
         url: `/browse/${shareId}/search`,
-        params: { q: query, token },
+        params,
+        skipAuth401: true, // 跳过401拦截，让组件自己处理密码验证
+      }) as Promise<BrowseResponse>,
+
+    getSearchStatus: (shareId: number): Promise<ApiResponse<any>> =>
+      this.request({
+        method: 'GET',
+        url: `/browse/${shareId}/search-status`,
+      }),
+
+    rebuildIndex: (shareId: number): Promise<ApiResponse<any>> =>
+      this.request({
+        method: 'POST',
+        url: `/browse/${shareId}/rebuild-index`,
       }),
   }
 

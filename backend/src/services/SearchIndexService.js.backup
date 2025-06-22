@@ -1,0 +1,242 @@
+/**
+ * 构建搜索索引
+ */
+async buildSearchIndex(shareId) {
+  const startTime = Date.now()
+  logger.info('开始构建搜索索引', { shareId })
+  
+  try {
+    // 设置构建状态
+    this.indexStatus.set(shareId, {
+      status: 'building',
+      lastUpdated: Date.now(),
+      progress: 0,
+      totalFiles: 0
+    })
+
+    // 获取分享配置
+    const Share = require('../models/Share')
+    const share = await Share.findById(shareId)
+    if (!share || !share.enabled) {
+      throw new Error('分享不存在或已禁用')
+    }
+
+    // 在内存中构建索引数组
+    const index = []
+    let totalFiles = 0
+
+    // 根据分享类型构建索引（全部在内存中进行）
+    switch (share.type) {
+      case 'local':
+        await this.buildLocalIndex(share.path, '', index, shareId)
+        break
+      case 'smb':
+        await this.buildSMBIndex(share, '', index, shareId)
+        break
+      case 'nfs':
+        // TODO: 实现NFS索引构建
+        logger.warn('NFS索引构建暂未实现', { shareId })
+        break
+      default:
+        throw new Error(`不支持的分享类型: ${share.type}`)
+    }
+
+    totalFiles = index.length
+
+    // 创建元数据
+    const metadata = {
+      status: 'completed',
+      lastUpdated: Date.now(),
+      progress: 100,
+      totalFiles,
+      buildDuration: Date.now() - startTime,
+      shareId,
+      indexVersion: '1.0'
+    }
+
+    // 立即存储到内存，确保搜索功能可用
+    this.indexes.set(shareId, index)
+    this.indexStatus.set(shareId, metadata)
+
+    logger.info('内存索引构建完成', { 
+      shareId, 
+      totalFiles, 
+      duration: Date.now() - startTime 
+    })
+
+    // 异步保存到磁盘，不阻塞搜索功能
+    this.saveIndexToDiskAsync(shareId, index, metadata)
+
+    // 发出索引完成事件
+    this.emit('indexBuilt', { shareId, totalFiles })
+
+    return index
+  } catch (error) {
+    logger.error('构建搜索索引失败', { shareId, error: error.message })
+    
+    this.indexStatus.set(shareId, {
+      status: 'failed',
+      lastUpdated: Date.now(),
+      error: error.message
+    })
+    
+    throw error
+  }
+}
+
+/**
+ * 异步保存索引到磁盘（不阻塞主流程）
+ */
+async saveIndexToDiskAsync(shareId, index, metadata) {
+  if (!this.config.enablePersistence) return
+
+  try {
+    // 使用setImmediate确保在下一个事件循环中执行，不阻塞当前操作
+    setImmediate(async () => {
+      try {
+        await this.saveIndexToDisk(shareId, index, metadata)
+        logger.info('索引异步保存到磁盘完成', { shareId, fileCount: index.length })
+      } catch (error) {
+        logger.error('异步保存索引到磁盘失败', { shareId, error: error.message })
+      }
+    })
+  } catch (error) {
+    logger.error('启动异步保存任务失败', { shareId, error: error.message })
+  }
+}
+
+/**
+ * 构建本地文件索引（优化版）
+ */
+async buildLocalIndex(dirPath, relativePath, index, shareId, depth = 0) {
+  const maxDepth = 20 // 防止无限递归
+  if (depth > maxDepth) return
+
+  try {
+    const items = await fs.readdir(dirPath)
+    
+    // 增大批处理大小以提高内存操作效率
+    const batchSize = this.config.batchSize * 2 // 默认100改为200
+    const batchPromises = []
+
+    for (let i = 0; i < items.length; i += batchSize) {
+      const batch = items.slice(i, i + batchSize)
+      
+      const batchPromise = Promise.all(batch.map(async (item) => {
+        try {
+          const itemPath = path.join(dirPath, item)
+          const itemRelativePath = path.join(relativePath, item).replace(/\\/g, '/')
+          const stats = await fs.stat(itemPath)
+
+          const indexItem = {
+            name: item,
+            path: itemRelativePath.startsWith('/') ? itemRelativePath : '/' + itemRelativePath,
+            fullPath: itemPath,
+            type: stats.isDirectory() ? 'directory' : 'file',
+            size: stats.size || 0,
+            modified: stats.mtime.toISOString(),
+            extension: stats.isFile() ? path.extname(item).toLowerCase() : undefined,
+            depth: depth,
+            parentPath: relativePath || '/',
+            // 搜索相关字段（在内存中预计算）
+            searchableText: item.toLowerCase(),
+            nameWords: this.tokenizeName(item)
+          }
+
+          // 直接添加到内存索引数组
+          index.push(indexItem)
+
+          // 递归处理子目录
+          if (stats.isDirectory()) {
+            await this.buildLocalIndex(itemPath, itemRelativePath, index, shareId, depth + 1)
+          }
+        } catch (error) {
+          // 跳过无法访问的文件
+          logger.debug('跳过无法访问的文件', { item, error: error.message })
+        }
+      }))
+
+      batchPromises.push(batchPromise)
+    }
+
+    // 等待所有批次完成
+    await Promise.all(batchPromises)
+
+    // 更新进度（基于内存中的索引数量）
+    const status = this.indexStatus.get(shareId)
+    if (status && index.length > 0) {
+      // 更准确的进度计算
+      status.progress = Math.min(95, Math.floor((index.length / Math.max(index.length, 1000)) * 90))
+      status.totalFiles = index.length
+    }
+
+  } catch (error) {
+    logger.warn('读取目录失败', { dirPath, error: error.message })
+  }
+}
+
+/**
+ * 构建SMB文件索引（优化版）
+ */
+async buildSMBIndex(share, relativePath, index, shareId, depth = 0) {
+  const maxDepth = 20
+  if (depth > maxDepth) return
+
+  try {
+    // 获取SMB配置
+    const smbConfig = share.smbConfig || await this.getSMBConfig(share.id)
+    if (!smbConfig) {
+      throw new Error('SMB配置不存在')
+    }
+
+    // 使用FileSystemService浏览SMB目录，一次性获取更多文件
+    const result = await this.fileSystemService.browseSMBDirectory(
+      smbConfig, 
+      relativePath || '/', 
+      { limit: 20000, offset: 0 } // 增大限制，减少网络往返
+    )
+
+    // 批量处理文件，在内存中构建索引
+    const directories = []
+    
+    for (const file of result.files) {
+      const indexItem = {
+        name: file.name,
+        path: file.path,
+        fullPath: file.path, // SMB使用虚拟路径
+        type: file.type,
+        size: file.size || 0,
+        modified: file.modified,
+        extension: file.extension,
+        depth: depth,
+        parentPath: relativePath || '/',
+        // 搜索相关字段（在内存中预计算）
+        searchableText: file.name.toLowerCase(),
+        nameWords: this.tokenizeName(file.name)
+      }
+
+      // 直接添加到内存索引数组
+      index.push(indexItem)
+
+      // 收集需要递归处理的目录
+      if (file.type === 'directory') {
+        directories.push(file.path)
+      }
+    }
+
+    // 批量递归处理子目录
+    for (const dirPath of directories) {
+      await this.buildSMBIndex(share, dirPath, index, shareId, depth + 1)
+    }
+
+    // 更新进度（基于内存中的索引数量）
+    const status = this.indexStatus.get(shareId)
+    if (status && index.length > 0) {
+      status.progress = Math.min(95, Math.floor((index.length / Math.max(index.length, 1000)) * 90))
+      status.totalFiles = index.length
+    }
+
+  } catch (error) {
+    logger.warn('读取SMB目录失败', { relativePath, error: error.message })
+  }
+}

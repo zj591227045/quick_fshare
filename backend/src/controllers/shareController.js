@@ -1,6 +1,7 @@
 const Share = require('../models/Share');
 const logger = require('../utils/logger');
 const { asyncHandler } = require('../middleware/errorHandler');
+const dbManager = require('../config/database');
 
 /**
  * 获取分享路径列表
@@ -78,9 +79,7 @@ const getShare = asyncHandler(async (req, res) => {
  */
 const createShare = asyncHandler(async (req, res) => {
   try {
-    const { name, description, path, type, accessType, password, enabled, sortOrder, smb_config, nfs_config } = req.body;
-    
-
+    const { name, description, path, type, access_type, password, enabled, sortOrder, smb_config, nfs_config } = req.body;
     
     // 检查名称是否已存在
     const nameExists = await Share.nameExists(name);
@@ -100,7 +99,7 @@ const createShare = asyncHandler(async (req, res) => {
       description,
       path,
       type,
-      accessType,
+      access_type,
       password,
       enabled,
       sortOrder,
@@ -134,7 +133,15 @@ const createShare = asyncHandler(async (req, res) => {
 const updateShare = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, path, type, accessType, password, enabled, sortOrder, smbConfig, nfsConfig } = req.body;
+    const { name, description, path, type, access_type, password, enabled, sortOrder, smb_config, nfs_config } = req.body;
+    
+    // 添加调试日志
+    console.log('=== 更新分享路径请求数据 ===');
+    console.log('ID:', id);
+    console.log('请求体:', JSON.stringify(req.body, null, 2));
+    console.log('访问类型:', access_type);
+    console.log('密码:', password ? '[已设置]' : '[未设置]');
+    console.log('==========================');
     
     // 检查分享路径是否存在
     const existingShare = await Share.findById(id);
@@ -162,24 +169,64 @@ const updateShare = asyncHandler(async (req, res) => {
       }
     }
     
-    // 更新分享路径
-    await Share.update(id, {
-      name,
-      description,
-      path,
-      type,
-      accessType,
-      password,
-      enabled,
-      sortOrder,
+    // 更新分享路径和相关配置
+    const result = await dbManager.transaction(async () => {
+      // 更新分享路径基本信息
+      await Share.update(id, {
+        name,
+        description,
+        path,
+        type,
+        access_type: access_type,
+        password,
+        enabled,
+        sort_order: sortOrder,
+      });
+      
+      // 处理SMB配置更新
+      if (type === 'smb' && smb_config) {
+        // 先删除旧配置
+        await dbManager.run('DELETE FROM smb_configs WHERE shared_path_id = ?', [id]);
+        // 插入新配置
+        await dbManager.run(
+          `INSERT INTO smb_configs (shared_path_id, server_ip, port, share_name, username, password, domain, workgroup, timeout)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            smb_config.server_ip,
+            smb_config.port || 445,
+            smb_config.share_name,
+            smb_config.username || '',
+            smb_config.password || '',
+            smb_config.domain || 'WORKGROUP',
+            smb_config.workgroup || 'WORKGROUP',
+            smb_config.timeout || 30000
+          ]
+        );
+      }
+      
+      // 处理NFS配置更新
+      if (type === 'nfs' && nfs_config) {
+        // 先删除旧配置
+        await dbManager.run('DELETE FROM nfs_configs WHERE shared_path_id = ?', [id]);
+        // 插入新配置
+        await dbManager.run(
+          `INSERT INTO nfs_configs (shared_path_id, server_ip, export_path, mount_point, mount_options, nfs_version, timeout)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            nfs_config.server_ip,
+            nfs_config.export_path,
+            nfs_config.mount_point || '',
+            nfs_config.mount_options || 'ro,soft,intr',
+            nfs_config.nfs_version || 'v3',
+            nfs_config.timeout || 30000
+          ]
+        );
+      }
+      
+      return true;
     });
-    
-    // 更新相关配置
-    if (type === 'smb' && smbConfig) {
-      await Share.updateSMBConfig(id, smbConfig);
-    } else if (type === 'nfs' && nfsConfig) {
-      await Share.updateNFSConfig(id, nfsConfig);
-    }
     
     // 获取更新后的分享路径信息
     const updatedShare = await Share.findById(id);
@@ -258,8 +305,8 @@ const getEnabledShares = asyncHandler(async (req, res) => {
       name: share.name,
       description: share.description,
       type: share.type,
-      accessType: share.access_type,
-      createdAt: share.created_at,
+      access_type: share.accessType,
+      createdAt: share.createdAt,
     }));
     
     res.json({

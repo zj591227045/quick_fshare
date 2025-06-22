@@ -1,4 +1,4 @@
-# Quick FShare - 局域网文件快速分享系统
+# Quick FShare - 私有文件快速分享系统
 
 ![Quick FShare Logo](docs/assets/logo.png)
 
@@ -6,7 +6,7 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/quickfshare/quickfshare.svg)](https://hub.docker.com/r/quickfshare/quickfshare)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Quick FShare 是一个基于Web的局域网文件分享系统，支持快速、美观、安全的文件分享功能。支持本地文件系统、SMB和NFS协议，提供现代化的用户界面和完整的管理功能。
+Quick FShare 是一个基于Web的私有文件分享系统，支持快速、美观、安全的文件分享功能。支持本地文件系统、SMB和NFS协议，提供现代化的用户界面和完整的管理功能。
 
 ## ✨ 特性
 

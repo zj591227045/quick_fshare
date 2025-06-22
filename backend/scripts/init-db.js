@@ -42,7 +42,7 @@ async function initializeDatabase() {
       ['theme', 'light', 'string', '默认主题设置'],
       ['language', 'zh-CN', 'string', '系统语言'],
       ['site_title', 'Quick FShare', 'string', '网站标题'],
-      ['site_description', '局域网文件快速分享系统', 'string', '网站描述'],
+      ['site_description', '私有文件快速分享系统', 'string', '网站描述'],
       ['max_file_size', '104857600', 'number', '最大文件大小限制(字节)'],
       ['thumbnail_enabled', 'true', 'boolean', '是否启用缩略图'],
       ['thumbnail_quality', '80', 'number', '缩略图质量(1-100)'],

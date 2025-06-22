@@ -30,7 +30,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const navigate = useNavigate()
   const location = useLocation()
   const { admin, logout } = useAuth()
-  const { mode, toggleMode } = useTheme()
+  const { mode, actualMode, toggleMode } = useTheme()
 
   // 菜单项配置
   const menuItems: MenuProps['items'] = [
@@ -56,6 +56,25 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
   ]
 
+  // 获取主题图标和文本
+  const getThemeInfo = () => {
+    switch (mode) {
+      case 'light':
+        return { icon: <MoonOutlined />, text: '切换到深色模式' }
+      case 'dark':
+        return { icon: <SunOutlined />, text: '切换到浅色模式' }
+      case 'auto':
+        return { 
+          icon: actualMode === 'light' ? <MoonOutlined /> : <SunOutlined />, 
+          text: `自动模式 (当前: ${actualMode === 'light' ? '浅色' : '深色'})` 
+        }
+      default:
+        return { icon: <MoonOutlined />, text: '切换主题' }
+    }
+  }
+
+  const themeInfo = getThemeInfo()
+
   // 用户下拉菜单
   const userMenuItems: MenuProps['items'] = [
     {
@@ -65,8 +84,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       key: 'theme',
-      icon: mode === 'light' ? <MoonOutlined /> : <SunOutlined />,
-      label: mode === 'light' ? '切换到深色模式' : '切换到浅色模式',
+      icon: themeInfo.icon,
+      label: themeInfo.text,
       onClick: toggleMode,
     },
     {
@@ -152,7 +171,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
         {/* 导航菜单 */}
         <Menu
-          theme={mode === 'dark' ? 'dark' : 'light'}
+          theme={actualMode === 'dark' ? 'dark' : 'light'}
           mode="inline"
           selectedKeys={[location.pathname]}
           items={menuItems}
@@ -206,8 +225,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             {/* 主题切换 */}
             <Button
               type="text"
-              icon={mode === 'light' ? <MoonOutlined /> : <SunOutlined />}
+              icon={themeInfo.icon}
               onClick={toggleMode}
+              title={themeInfo.text}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -252,7 +272,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           style={{
             margin: '16px',
             padding: '24px',
-            background: 'var(--bg-color)',
+            background: 'var(--bg-elevated)',
             borderRadius: 8,
             border: '1px solid var(--border-secondary)',
             minHeight: 'calc(100vh - 112px)',

@@ -254,11 +254,34 @@ class Share {
                 params
             );
 
+            // 为每个分享路径加载配置信息
+            const sharesWithConfig = await Promise.all(shares.map(async (shareData) => {
+                const share = new Share(shareData);
+                
+                // 查询SMB配置
+                if (share.type === 'smb') {
+                    share.smbConfig = await dbManager.get(
+                        'SELECT * FROM smb_configs WHERE shared_path_id = ?',
+                        [share.id]
+                    );
+                }
+
+                // 查询NFS配置
+                if (share.type === 'nfs') {
+                    share.nfsConfig = await dbManager.get(
+                        'SELECT * FROM nfs_configs WHERE shared_path_id = ?',
+                        [share.id]
+                    );
+                }
+
+                return share;
+            }));
+
             const duration = Date.now() - startTime;
             logDatabase('SELECT', 'shared_paths', duration, { page, limit, total: countResult.total });
 
             return {
-                shares: shares.map(share => new Share(share)),
+                shares: sharesWithConfig,
                 pagination: {
                     page,
                     limit,
@@ -313,12 +336,15 @@ class Share {
 
             for (const [key, value] of Object.entries(updateData)) {
                 if (allowedFields.includes(key) && value !== undefined) {
-                    if (key === 'password' && value) {
-                        // 加密新密码
-                        const saltRounds = 10;
-                        const hashedPassword = await bcrypt.hash(value, saltRounds);
-                        updates.push('password = ?');
-                        values.push(hashedPassword);
+                    if (key === 'password') {
+                        if (value && value.trim() !== '') {
+                            // 只有在提供了新密码时才更新
+                            const saltRounds = 10;
+                            const hashedPassword = await bcrypt.hash(value, saltRounds);
+                            updates.push('password = ?');
+                            values.push(hashedPassword);
+                        }
+                        // 如果密码为空，则跳过不更新
                     } else if (key === 'enabled') {
                         updates.push('enabled = ?');
                         values.push(value ? 1 : 0);
@@ -399,6 +425,20 @@ class Share {
                 return true; // 公开分享无需密码
             }
 
+            // 如果实例已经包含密码，直接使用
+            if (this.password) {
+                const isValid = await bcrypt.compare(password, this.password);
+                
+                if (isValid) {
+                    logSecurity('SHARE_PASSWORD_SUCCESS', { shareId: this.id, shareName: this.name });
+                } else {
+                    logSecurity('SHARE_PASSWORD_FAILED', { shareId: this.id, shareName: this.name });
+                }
+                
+                return isValid;
+            }
+
+            // 如果实例不包含密码，则查询数据库（向后兼容）
             const share = await dbManager.get(
                 'SELECT password FROM shared_paths WHERE id = ?',
                 [this.id]
@@ -647,7 +687,7 @@ class Share {
             } = updateData;
 
             let hashedPassword = undefined;
-            if (access_type === 'password' && password) {
+            if (access_type === 'password' && password && password.trim() !== '') {
                 const saltRounds = 10;
                 hashedPassword = await bcrypt.hash(password, saltRounds);
             }

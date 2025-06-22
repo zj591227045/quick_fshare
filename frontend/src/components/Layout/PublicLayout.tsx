@@ -19,7 +19,26 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({
   showFooter = true 
 }) => {
   const navigate = useNavigate()
-  const { mode, toggleMode } = useTheme()
+  const { mode, actualMode, toggleMode } = useTheme()
+
+  // 获取主题按钮信息
+  const getThemeButtonInfo = () => {
+    switch (mode) {
+      case 'light':
+        return { icon: <MoonOutlined />, title: '切换到深色模式' }
+      case 'dark':
+        return { icon: <SunOutlined />, title: '切换到浅色模式' }
+      case 'auto':
+        return { 
+          icon: actualMode === 'light' ? <MoonOutlined /> : <SunOutlined />, 
+          title: `自动模式 (当前: ${actualMode === 'light' ? '浅色' : '深色'})` 
+        }
+      default:
+        return { icon: <MoonOutlined />, title: '切换主题' }
+    }
+  }
+
+  const themeButtonInfo = getThemeButtonInfo()
 
   return (
     <Layout style={{ minHeight: '100vh', background: 'var(--bg-color)' }}>
@@ -88,7 +107,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({
                 }}
                 className="logo-subtitle"
               >
-                局域网文件分享
+                私有文件分享
               </Text>
             </div>
           </div>
@@ -105,8 +124,9 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({
 
             <Button
               type="text"
-              icon={mode === 'light' ? <MoonOutlined /> : <SunOutlined />}
+              icon={themeButtonInfo.icon}
               onClick={toggleMode}
+              title={themeButtonInfo.title}
             />
 
             <Button
@@ -141,7 +161,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({
           }}
         >
           <Text style={{ color: 'var(--text-secondary)' }}>
-            Quick FShare ©2024 - 简单、安全、美观的局域网文件分享系统
+            Quick FShare ©2024 - 简单、安全、美观的私有文件分享系统
           </Text>
         </Footer>
       )}

@@ -76,11 +76,29 @@ export interface FileItem {
 
 export interface BrowseResponse {
   success: boolean
+  message?: string
   data: {
     current_path: string
     parent_path?: string
     files: FileItem[]
     total: number
+    share_info?: {
+      id: number
+      name: string
+      type: string
+    }
+    pagination?: {
+      limit: number
+      offset: number
+      total: number
+      has_more: boolean
+      current_page: number
+      total_pages: number
+    }
+    // 搜索相关字段
+    results?: FileItem[]
+    searchTime?: number
+    query?: string
   }
 }
 
@@ -140,6 +158,8 @@ export interface BrowseParams {
   sort?: 'name' | 'size' | 'modified'
   order?: 'asc' | 'desc'
   search?: string
+  limit?: number
+  offset?: number
 }
 
 // 密码验证参数

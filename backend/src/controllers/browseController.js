@@ -20,6 +20,15 @@ class BrowseController {
       const { path: requestPath = '', sort = 'name', order = 'asc', search = '' } = req.query
       const clientIp = req.ip || req.connection.remoteAddress
 
+      // 解码URL编码的路径，处理中文字符
+      const decodedPath = requestPath ? decodeURIComponent(requestPath) : ''
+      
+      logger.debug('路径处理', { 
+        originalPath: requestPath, 
+        decodedPath,
+        shareId 
+      })
+
       // 获取分享配置
       const share = await Share.findById(shareId)
       if (!share) {
@@ -36,30 +45,42 @@ class BrowseController {
         })
       }
 
+      // 添加调试日志
+      console.log('=== 密码验证检查 ===');
+      console.log('分享ID:', shareId);
+      console.log('访问类型:', share.accessType);
+      console.log('需要密码验证:', share.accessType === 'password');
+      console.log('====================');
+
       // 检查密码保护
-      if (share.access_type === 'password') {
+      if (share.accessType === 'password') {
         const token = req.query.token || req.headers['x-access-token']
+        console.log('收到的令牌:', token ? '[已提供]' : '[未提供]');
+        console.log('令牌验证结果:', token ? verifyTemporaryToken(token, shareId) : 'N/A');
+        
         if (!token || !verifyTemporaryToken(token, shareId)) {
+          console.log('密码验证失败，返回401');
           return res.status(401).json({
             success: false,
             message: '需要密码验证',
             require_password: true
           })
         }
+        console.log('密码验证通过');
       }
 
       // 浏览文件（根据分享类型自动选择方式）
       const result = await this.fileSystemService.browseDirectory(share, {
-        requestPath,
+        requestPath: decodedPath,
         sort,
         order,
         search,
-        limit: parseInt(req.query.limit) || undefined,
-        offset: parseInt(req.query.offset) || undefined
+        limit: parseInt(req.query.limit) || 200, // 默认每页200个文件
+        offset: parseInt(req.query.offset) || 0
       })
 
       // 记录访问日志
-      await this.logAccess(shareId, clientIp, requestPath || '/', 'browse')
+      await this.logAccess(shareId, clientIp, decodedPath || '/', 'browse')
 
       res.json({
         success: true,
@@ -69,14 +90,15 @@ class BrowseController {
             id: share.id,
             name: share.name,
             type: share.type,
-            access_type: share.access_type
+            access_type: share.accessType
           }
         }
       })
     } catch (error) {
       logger.error('浏览文件失败', {
         shareId: req.params.shareId,
-        path: req.query.path,
+        originalPath: req.query.path,
+        decodedPath: req.query.path ? decodeURIComponent(req.query.path) : '',
         error: error.message
       })
 
@@ -101,7 +123,7 @@ class BrowseController {
         })
       }
 
-      const share = await Share.findById(share_id)
+      const share = await Share.findById(share_id, true) // 包含密码字段
       if (!share) {
         return res.status(404).json({
           success: false,
@@ -109,7 +131,7 @@ class BrowseController {
         })
       }
 
-      if (share.access_type !== 'password') {
+      if (share.accessType !== 'password') {
         return res.status(400).json({
           success: false,
           message: '该分享不需要密码'
@@ -117,7 +139,7 @@ class BrowseController {
       }
 
       // 验证密码
-      const isValid = await Share.verifyPassword(share_id, password)
+      const isValid = await share.verifyPassword(password)
       if (!isValid) {
         return res.status(401).json({
           success: false,
@@ -126,7 +148,8 @@ class BrowseController {
       }
 
       // 生成临时访问令牌 (24小时有效)
-      const token = generateTemporaryToken(share_id, '24h')
+      const clientIp = req.ip || req.connection.remoteAddress;
+      const token = generateTemporaryToken(share_id, clientIp);
 
       res.json({
         success: true,
@@ -172,7 +195,7 @@ class BrowseController {
       }
 
       // 检查密码保护
-      if (share.access_type === 'password') {
+      if (share.accessType === 'password') {
         const token = req.query.token || req.headers['x-access-token']
         if (!token || !verifyTemporaryToken(token, shareId)) {
           return res.status(401).json({
@@ -350,7 +373,7 @@ class BrowseController {
       }
 
       // 检查密码保护
-      if (share.access_type === 'password') {
+      if (share.accessType === 'password') {
         const token = req.query.token || req.headers['x-access-token']
         if (!token || !verifyTemporaryToken(token, shareId)) {
           return res.status(401).send('需要密码验证')
@@ -399,10 +422,18 @@ class BrowseController {
   async searchFiles(req, res) {
     try {
       const { shareId } = req.params
-      const { q: query, extensions, max_results = 100 } = req.query
+      const { 
+        q: query, 
+        extensions, 
+        type = 'all',
+        sort = 'relevance',
+        order = 'desc',
+        limit = 100,
+        offset = 0
+      } = req.query
       const clientIp = req.ip || req.connection.remoteAddress
 
-      if (!query) {
+      if (!query || query.trim().length === 0) {
         return res.status(400).json({
           success: false,
           message: '搜索关键词不能为空'
@@ -426,7 +457,7 @@ class BrowseController {
       }
 
       // 检查密码保护
-      if (share.access_type === 'password') {
+      if (share.accessType === 'password') {
         const token = req.query.token || req.headers['x-access-token']
         if (!token || !verifyTemporaryToken(token, shareId)) {
           return res.status(401).json({
@@ -436,22 +467,33 @@ class BrowseController {
         }
       }
 
-      // 搜索文件
+      // 使用新的搜索索引服务
+      const { getSearchIndexService } = require('../services/SearchIndexService')
+      const searchService = getSearchIndexService()
+
       const extensionList = extensions ? extensions.split(',') : []
-      const results = await this.fileSystemService.searchFiles(share.path, query, {
+      const searchResult = await searchService.searchFiles(shareId, query.trim(), {
         extensions: extensionList,
-        maxResults: parseInt(max_results)
+        type: type,
+        sortBy: sort,
+        sortOrder: order,
+        limit: parseInt(limit) || 100,
+        offset: parseInt(offset) || 0
       })
 
       // 记录搜索日志
-      await this.logAccess(shareId, clientIp, `search:${query}`, 'browse')
+      await this.logAccess(shareId, clientIp, `search:${query}`, 'search')
 
       res.json({
         success: true,
         data: {
-          query,
-          results,
-          total: results.length
+          query: query.trim(),
+          ...searchResult,
+          share_info: {
+            id: share.id,
+            name: share.name,
+            type: share.type
+          }
         }
       })
     } catch (error) {
@@ -466,6 +508,329 @@ class BrowseController {
         message: `搜索失败: ${error.message}`
       })
     }
+  }
+
+  /**
+   * 获取搜索索引状态
+   */
+  async getSearchIndexStatus(req, res) {
+    try {
+      const { shareId } = req.params
+
+      // 获取分享配置
+      const share = await Share.findById(shareId)
+      if (!share) {
+        return res.status(404).json({
+          success: false,
+          message: '分享路径不存在'
+        })
+      }
+
+      const { getSearchIndexService } = require('../services/SearchIndexService')
+      const searchService = getSearchIndexService()
+      
+      const status = searchService.getIndexStatus(shareId)
+
+      res.json({
+        success: true,
+        data: {
+          shareId,
+          shareName: share.name,
+          shareType: share.type,
+          indexStatus: status
+        }
+      })
+    } catch (error) {
+      logger.error('获取搜索索引状态失败', {
+        shareId: req.params.shareId,
+        error: error.message
+      })
+
+      res.status(500).json({
+        success: false,
+        message: `获取索引状态失败: ${error.message}`
+      })
+    }
+  }
+
+  /**
+   * 重建搜索索引
+   */
+  async rebuildSearchIndex(req, res) {
+    try {
+      const { shareId } = req.params
+
+      // 获取分享配置
+      const share = await Share.findById(shareId)
+      if (!share) {
+        return res.status(404).json({
+          success: false,
+          message: '分享路径不存在'
+        })
+      }
+
+      if (!share.enabled) {
+        return res.status(403).json({
+          success: false,
+          message: '分享路径已禁用'
+        })
+      }
+
+      const { getSearchIndexService } = require('../services/SearchIndexService')
+      const searchService = getSearchIndexService()
+      
+      // 异步重建索引
+      searchService.rebuildIndex(shareId).catch(error => {
+        logger.error('重建索引失败', { shareId, error: error.message })
+      })
+
+      res.json({
+        success: true,
+        message: '索引重建已开始，请稍后查看状态',
+        data: {
+          shareId,
+          shareName: share.name
+        }
+      })
+    } catch (error) {
+      logger.error('重建搜索索引失败', {
+        shareId: req.params.shareId,
+        error: error.message
+      })
+
+      res.status(500).json({
+        success: false,
+        message: `重建索引失败: ${error.message}`
+      })
+    }
+  }
+
+  /**
+   * 获取索引管理信息
+   */
+  async getIndexManagement(req, res) {
+    try {
+      const { getSearchIndexService } = require('../services/SearchIndexService')
+      const searchService = getSearchIndexService()
+      
+      // 获取所有分享的索引状态
+      const Share = require('../models/Share')
+      const shares = await Share.getAll()
+      
+      const indexInfo = await Promise.all(shares.map(async (share) => {
+        const status = searchService.getIndexStatus(share.id)
+        const indexPath = searchService.getIndexFilePath(share.id)
+        
+        // 检查磁盘文件是否存在
+        const fs = require('fs').promises
+        let fileExists = false
+        let fileSize = 0
+        try {
+          const stats = await fs.stat(indexPath)
+          fileExists = true
+          fileSize = stats.size
+        } catch (error) {
+          // 文件不存在
+        }
+
+        return {
+          shareId: share.id,
+          shareName: share.name,
+          shareType: share.type,
+          indexStatus: status,
+          indexPath,
+          fileExists,
+          fileSize,
+          humanFileSize: fileSize > 0 ? this.formatFileSize(fileSize) : '-'
+        }
+      }))
+
+      res.json({
+        success: true,
+        data: {
+          indexInfo,
+          totalShares: shares.length,
+          indexedShares: indexInfo.filter(info => info.indexStatus.status === 'completed').length
+        }
+      })
+    } catch (error) {
+      logger.error('获取索引管理信息失败', { error: error.message })
+      res.status(500).json({
+        success: false,
+        message: `获取索引管理信息失败: ${error.message}`
+      })
+    }
+  }
+
+  /**
+   * 批量重建索引
+   */
+  async batchRebuildIndex(req, res) {
+    try {
+      const { shareIds } = req.body
+      
+      if (!Array.isArray(shareIds) || shareIds.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: '请提供要重建索引的分享ID列表'
+        })
+      }
+
+      const { getSearchIndexService } = require('../services/SearchIndexService')
+      const searchService = getSearchIndexService()
+      
+      // 异步重建所有指定的索引
+      const results = []
+      for (const shareId of shareIds) {
+        try {
+          searchService.rebuildIndex(shareId).catch(error => {
+            logger.error('批量重建索引失败', { shareId, error: error.message })
+          })
+          results.push({ shareId, status: 'started' })
+        } catch (error) {
+          results.push({ shareId, status: 'failed', error: error.message })
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `已开始重建 ${shareIds.length} 个分享的索引`,
+        data: { results }
+      })
+    } catch (error) {
+      logger.error('批量重建索引失败', { error: error.message })
+      res.status(500).json({
+        success: false,
+        message: `批量重建索引失败: ${error.message}`
+      })
+    }
+  }
+
+  /**
+   * 清理索引
+   */
+  async cleanupIndexes(req, res) {
+    try {
+      const { getSearchIndexService } = require('../services/SearchIndexService')
+      const searchService = getSearchIndexService()
+      
+      await searchService.cleanupExpiredIndexes()
+
+      res.json({
+        success: true,
+        message: '索引清理完成'
+      })
+    } catch (error) {
+      logger.error('清理索引失败', { error: error.message })
+      res.status(500).json({
+        success: false,
+        message: `清理索引失败: ${error.message}`
+      })
+    }
+  }
+
+  /**
+   * 触发增量更新
+   */
+  async triggerIncrementalUpdate(req, res) {
+    try {
+      const { shareId } = req.params
+
+      const { getSearchIndexService } = require('../services/SearchIndexService')
+      const searchService = getSearchIndexService()
+      
+      // 触发增量更新
+      await searchService.triggerIncrementalUpdate(shareId)
+
+      res.json({
+        success: true,
+        message: '增量更新已完成',
+        data: { shareId }
+      })
+    } catch (error) {
+      logger.error('触发增量更新失败', { shareId: req.params.shareId, error: error.message })
+      res.status(500).json({
+        success: false,
+        message: `增量更新失败: ${error.message}`
+      })
+    }
+  }
+
+  /**
+   * 获取增量更新统计
+   */
+  async getIncrementalUpdateStats(req, res) {
+    try {
+      const { shareId } = req.params
+
+      const { getSearchIndexService } = require('../services/SearchIndexService')
+      const searchService = getSearchIndexService()
+      
+      const stats = searchService.getIncrementalUpdateStats(shareId)
+      
+      if (!stats) {
+        return res.status(404).json({
+          success: false,
+          message: '分享索引不存在'
+        })
+      }
+
+      res.json({
+        success: true,
+        data: stats
+      })
+    } catch (error) {
+      logger.error('获取增量更新统计失败', { shareId: req.params.shareId, error: error.message })
+      res.status(500).json({
+        success: false,
+        message: `获取统计信息失败: ${error.message}`
+      })
+    }
+  }
+
+  /**
+   * 配置增量更新
+   */
+  async configureIncrementalUpdate(req, res) {
+    try {
+      const { 
+        enabled, 
+        checkInterval, 
+        fullRebuildThreshold 
+      } = req.body
+
+      const { getSearchIndexService } = require('../services/SearchIndexService')
+      const searchService = getSearchIndexService()
+      
+      const newConfig = searchService.configureIncrementalUpdate({
+        enabled,
+        checkInterval,
+        fullRebuildThreshold
+      })
+
+      res.json({
+        success: true,
+        message: '增量更新配置已更新',
+        data: newConfig
+      })
+    } catch (error) {
+      logger.error('配置增量更新失败', { error: error.message })
+      res.status(500).json({
+        success: false,
+        message: `配置失败: ${error.message}`
+      })
+    }
+  }
+
+  /**
+   * 格式化文件大小的辅助方法
+   */
+  formatFileSize(bytes) {
+    if (bytes === 0) return '0 B'
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+    if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + ' MB'
+    return (bytes / 1024 / 1024 / 1024).toFixed(1) + ' GB'
   }
 
   /**
@@ -493,7 +858,7 @@ class BrowseController {
       }
 
       // 检查密码保护
-      if (share.access_type === 'password') {
+      if (share.accessType === 'password') {
         const token = req.query.token || req.headers['x-access-token']
         if (!token || !verifyTemporaryToken(token, shareId)) {
           return res.status(401).json({

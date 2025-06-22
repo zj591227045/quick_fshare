@@ -78,6 +78,12 @@ async function startServer() {
     await dbManager.connect();
     console.log('✅ 数据库连接成功');
     
+    // 初始化搜索索引服务
+    const { getSearchIndexService } = require('./src/services/SearchIndexService');
+    const searchIndexService = getSearchIndexService();
+    await searchIndexService.init();
+    console.log('✅ 搜索索引服务初始化成功');
+    
     // 启动HTTP服务器
     app.listen(PORT, () => {
       console.log(`🚀 Quick FShare Backend 服务器运行在端口 ${PORT}`);

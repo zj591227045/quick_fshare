@@ -6,9 +6,9 @@
     "auditLog": "/Users/jackson/Documents/Code/Quick_FShare/data/logs/.0c142487f1c795560eb56771e643e6bc02442686-audit.json",
     "files": [
         {
-            "date": 1750568562478,
+            "date": 1750577026140,
             "name": "/Users/jackson/Documents/Code/Quick_FShare/data/logs/security-2025-06-22.log",
-            "hash": "84b7ae9d14743a2e3c0096a2a10b29985659bcede0c26b06e3ca4b0bd8966aba"
+            "hash": "3913e05f5be2c9efa422bb541cd06e91a4cca22b7924e4fc76eb763d5a406ed9"
         }
     ],
     "hashType": "sha256"

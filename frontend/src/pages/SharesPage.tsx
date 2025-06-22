@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Button, Space, Tag, Typography, Modal, Form, Input, Select, Collapse, InputNumber, App } from 'antd';
+import { Card, Table, Button, Space, Tag, Typography, Modal, Form, Input, Select, Collapse, App, Switch } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, LinkOutlined, FolderOutlined, DatabaseOutlined, CloudServerOutlined } from '@ant-design/icons';
-import { SharePath, CreateShareRequest, SMBConfig, NFSConfig } from '@/types';
+import { SharePath, CreateShareRequest } from '@/types';
 import { sharesApi } from '@/services/api';
 
 const { Title } = Typography;
@@ -152,14 +152,35 @@ const SharesPage: React.FC = () => {
   const handleEdit = (share: SharePath) => {
     setEditingShare(share);
     setShareType(share.type as 'local' | 'smb' | 'nfs');
-    form.setFieldsValue({
+    
+    // 设置基本字段
+    const formValues: any = {
       name: share.name,
+      description: share.description || '',
       path: share.path,
       type: share.type,
       access_type: share.accessType,
-      password: '',
+      password: '', // 密码字段始终为空，出于安全考虑
       enabled: share.enabled,
-    });
+    };
+
+    // 设置SMB配置
+    if (share.type === 'smb' && share.smbConfig) {
+      formValues.smb_server_ip = share.smbConfig.server_ip;
+      formValues.smb_share_name = share.smbConfig.share_name;
+      formValues.smb_username = share.smbConfig.username;
+      formValues.smb_password = ''; // 密码字段为空，出于安全考虑
+      formValues.smb_domain = share.smbConfig.domain || 'WORKGROUP';
+    }
+
+    // 设置NFS配置
+    if (share.type === 'nfs' && share.nfsConfig) {
+      formValues.nfs_server_ip = share.nfsConfig.server_ip;
+      formValues.nfs_export_path = share.nfsConfig.export_path;
+      formValues.nfs_mount_options = share.nfsConfig.mount_options || 'ro,soft,intr';
+    }
+
+    form.setFieldsValue(formValues);
     setIsModalOpen(true);
   };
 
@@ -191,14 +212,14 @@ const SharesPage: React.FC = () => {
 
   const handleSave = async (values: any) => {
     try {
-
-      
       const shareData: CreateShareRequest = {
         name: values.name,
+        description: values.description || '',
         path: values.path,
         type: values.type,
         access_type: values.access_type,
-        password: values.password,
+        password: values.password || undefined,
+        enabled: values.enabled !== undefined ? values.enabled : true,
       };
 
       // 添加SMB配置
@@ -215,13 +236,11 @@ const SharesPage: React.FC = () => {
       // 添加NFS配置
       if (values.type === 'nfs') {
         shareData.nfs_config = {
-          server_ip: values.nfs_server_ip,
-          export_path: values.nfs_export_path,
-          mount_options: values.nfs_mount_options,
+          server_ip: values.nfs_server_ip || '',
+          export_path: values.nfs_export_path || '',
+          mount_options: values.nfs_mount_options || 'ro,soft,intr',
         };
       }
-
-
 
       let response;
       if (editingShare) {
@@ -313,6 +332,13 @@ const SharesPage: React.FC = () => {
             rules={[{ required: true, message: '请输入分享名称' }]}
           >
             <Input placeholder="请输入分享名称" />
+          </Form.Item>
+
+          <Form.Item
+            name="description"
+            label="分享描述"
+          >
+            <Input.TextArea placeholder="请输入分享描述（可选）" rows={3} />
           </Form.Item>
 
           <Form.Item
@@ -472,13 +498,10 @@ const SharesPage: React.FC = () => {
 
           <Form.Item
             name="enabled"
-            label="状态"
+            label="启用状态"
             valuePropName="checked"
           >
-            <Select>
-              <Option value={true}>启用</Option>
-              <Option value={false}>禁用</Option>
-            </Select>
+            <Switch checkedChildren="启用" unCheckedChildren="禁用" />
           </Form.Item>
         </Form>
       </Modal>

@@ -18,10 +18,11 @@ type AuthAction =
   | { type: 'TOKEN_REFRESH'; payload: { accessToken: string } }
   | { type: 'SET_LOADING'; payload: boolean }
 
-interface AuthContextType extends AuthState {
+interface AuthContextType extends Omit<AuthState, 'refreshToken'> {
+  refreshToken: string | null
   login: (username: string, password: string) => Promise<LoginResponse>
   logout: () => void
-  refreshToken: () => Promise<boolean>
+  refreshTokenAction: () => Promise<boolean>
 }
 
 const initialState: AuthState = {
@@ -183,7 +184,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     ...state,
     login,
     logout,
-    refreshToken: refreshTokenAction,
+    refreshTokenAction,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

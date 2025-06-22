@@ -36,32 +36,55 @@ class FileSystemService {
    * 获取SMB客户端连接
    */
   async getSMBClient(smbConfig) {
-    // 每次都创建新的连接，避免连接冲突
-    const smb2Client = new SMB2({
-      share: `\\\\${smbConfig.server_ip}\\${smbConfig.share_name}`,
-      domain: smbConfig.domain || 'WORKGROUP',
-      username: smbConfig.username || 'guest',
-      password: smbConfig.password || '',
-      port: smbConfig.port || 445,
-      timeout: smbConfig.timeout || 30000,
-      autoCloseTimeout: 5000 // 5秒后自动关闭连接
-    })
+    try {
+      logger.debug('创建SMB连接', { 
+        server_ip: smbConfig.server_ip,
+        share_name: smbConfig.share_name,
+        username: smbConfig.username || 'guest',
+        hasPassword: !!smbConfig.password,
+        domain: smbConfig.domain || 'WORKGROUP'
+      })
 
-    return smb2Client
+      // 每次都创建新的连接，避免连接冲突
+      const smb2Client = new SMB2({
+        share: `\\\\${smbConfig.server_ip}\\${smbConfig.share_name}`,
+        domain: smbConfig.domain || 'WORKGROUP',
+        username: smbConfig.username || 'guest',
+        password: smbConfig.password || '',
+        port: smbConfig.port || 445,
+        timeout: smbConfig.timeout || 10000, // 减少超时时间到10秒
+        autoCloseTimeout: 3000 // 3秒后自动关闭连接
+      })
+
+      logger.debug('SMB客户端创建成功')
+      return smb2Client
+    } catch (error) {
+      logger.error('创建SMB客户端失败', { error: error.message, smbConfig })
+      throw new Error(`创建SMB客户端失败: ${error.message}`)
+    }
   }
 
   /**
    * 浏览SMB目录
    */
   async browseSMBDirectory(smbConfig, remotePath, options = {}) {
-    const { sort = 'name', order = 'asc', search = '', limit, offset } = options
+    const { sort = 'name', order = 'asc', search = '', limit = 200, offset = 0, detailed = false } = options
     const startTime = Date.now()
+    let smb2Client = null
 
     try {
-      logger.info('开始SMB目录浏览', { remotePath, fileCount: 'unknown' })
+      logger.info('开始SMB目录浏览', { 
+        remotePath, 
+        limit, 
+        offset,
+        fileCount: 'unknown' 
+      })
       
-      const smb2Client = await this.getSMBClient(smbConfig)
-      const actualPath = remotePath === '/' ? '' : remotePath
+      smb2Client = await this.getSMBClient(smbConfig)
+      // 处理路径：移除开头的斜杠，SMB路径不需要开头的斜杠
+      const actualPath = remotePath === '/' ? '' : remotePath.startsWith('/') ? remotePath.substring(1) : remotePath
+      
+      logger.debug('SMB路径处理', { originalPath: remotePath, actualPath })
 
       // 读取目录内容
       const readdirStart = Date.now()
@@ -81,89 +104,81 @@ class FileSystemService {
         duration: Date.now() - readdirStart 
       })
 
+      // 先进行搜索过滤（如果有搜索条件）
+      let filteredItems = items
+      if (search) {
+        filteredItems = items.filter(item => 
+          item.toLowerCase().includes(search.toLowerCase())
+        )
+      }
+
+      // 暂时跳过后端排序，减少处理时间，让前端来排序
+      // if (sort === 'name') {
+      //   filteredItems.sort((a, b) => {
+      //     const comparison = a.localeCompare(b, 'zh', { numeric: true, sensitivity: 'base' })
+      //     return order === 'desc' ? -comparison : comparison
+      //   })
+      // }
+
+      // 计算分页
+      const total = filteredItems.length
+      const paginatedItems = filteredItems.slice(offset, offset + limit)
+
+      logger.info('SMB分页处理完成', { 
+        totalItems: total,
+        paginatedCount: paginatedItems.length,
+        offset,
+        limit
+      })
+
+      // 快速模式：跳过stat调用，使用启发式判断
+      const statStart = Date.now()
       const fileInfos = []
 
-      // 批量并发获取文件信息 - 提高SMB性能
-      const statPromises = items.map(async (item) => {
+      // 直接处理所有文件，不进行stat调用以提高性能
+      for (const item of paginatedItems) {
         try {
           const itemPath = actualPath ? `${actualPath}/${item}` : item
           
-          // 并发获取文件统计信息
-          const stats = await new Promise((resolve, reject) => {
-            smb2Client.stat(itemPath, (err, stat) => {
-              if (err) {
-                // 对于无法访问的文件，返回基本信息
-                logger.debug('无法获取SMB文件stat，使用默认信息', { item, error: err.message })
-                resolve({
-                  isDirectory: () => false,
-                  size: 0,
-                  mtime: new Date()
-                })
-              } else {
-                resolve(stat)
-              }
-            })
-          })
-
-          // 检查文件类型 - @marsaud/smb2库的stat对象结构不同
-          const isDirectory = stats.isDirectory ? stats.isDirectory() : (stats.mode && (stats.mode & 0o040000) !== 0)
+          // 启发式判断文件类型
+          const hasExtension = path.extname(item).length > 0
+          const startsWithDot = item.startsWith('.')
+          const extension = hasExtension ? path.extname(item).toLowerCase() : undefined
+          
+          // 基于文件名模式的简单判断
+          const isDirectory = !hasExtension && !startsWithDot
           const isFile = !isDirectory
 
-          const info = {
+          fileInfos.push({
             name: item,
             path: `/${itemPath}`,
             type: isDirectory ? 'directory' : 'file',
-            size: stats.size || 0,
-            modified: stats.mtime ? stats.mtime.toISOString() : new Date().toISOString(),
-            extension: isFile ? path.extname(item).toLowerCase() : undefined,
-            mime_type: isFile ? this.getMimeType(path.extname(item).toLowerCase()) : undefined,
-            has_thumbnail: isFile ? this.supportsThumbnail(path.extname(item).toLowerCase()) : false,
+            size: 0, // 跳过大小信息以提高速度
+            modified: new Date().toISOString(), // 使用当前时间
+            extension: extension,
+            mime_type: isFile ? this.getMimeType(extension || '') : undefined,
+            has_thumbnail: isFile ? this.supportsThumbnail(extension || '') : false,
             is_readable: isFile,
             permissions: {
               read: true,
               write: false,
               execute: false
             }
-          }
-
-          // 搜索过滤
-          if (search && !info.name.toLowerCase().includes(search.toLowerCase())) {
-            return null
-          }
-
-          return info
+          })
         } catch (error) {
-          logger.warn('跳过无法访问的SMB文件', { item, error: error.message })
-          return null
+          logger.warn('跳过无法处理的SMB文件', { item, error: error.message })
         }
-      })
-      
-      // 等待所有stat操作完成 - 并发执行提高性能
-      const statStart = Date.now()
-      const results = await Promise.all(statPromises)
+      }
       
       logger.info('SMB批量stat完成', { 
         remotePath, 
-        fileCount: items.length, 
+        processedCount: fileInfos.length,
         duration: Date.now() - statStart 
       })
-      
-      // 过滤掉null结果并添加到fileInfos
-      results.forEach(info => {
-        if (info) {
-          fileInfos.push(info)
-        }
-      })
 
-      // 排序
-      this.sortFiles(fileInfos, sort, order)
-
-      // 分页
-      const total = fileInfos.length
-      let paginatedFiles = fileInfos
-      if (limit) {
-        const startIndex = offset || 0
-        paginatedFiles = fileInfos.slice(startIndex, startIndex + limit)
+      // 如果是按照其他属性排序，需要重新排序
+      if (sort !== 'name') {
+        this.sortFiles(fileInfos, sort, order)
       }
 
       // 获取父级目录路径
@@ -172,14 +187,16 @@ class FileSystemService {
       const result = {
         current_path: remotePath,
         parent_path: parentPath,
-        files: paginatedFiles,
+        files: fileInfos,
         total,
-        pagination: limit ? {
+        pagination: {
           limit,
-          offset: offset || 0,
+          offset,
           total,
-          has_more: (offset || 0) + limit < total
-        } : null
+          has_more: offset + limit < total,
+          current_page: Math.floor(offset / limit) + 1,
+          total_pages: Math.ceil(total / limit)
+        }
       }
 
       // 主动关闭SMB连接
@@ -187,7 +204,9 @@ class FileSystemService {
 
       logger.info('SMB目录浏览完成', { 
         remotePath, 
-        totalFiles: result.total, 
+        returnedFiles: result.files.length,
+        totalFiles: result.total,
+        hasMore: result.pagination.has_more,
         totalDuration: Date.now() - startTime 
       })
 
@@ -205,9 +224,14 @@ class FileSystemService {
    * 创建SMB文件读取流
    */
   async createSMBReadStream(smbConfig, remotePath, options = {}) {
+    let smb2Client = null
+    
     try {
-      const smb2Client = await this.getSMBClient(smbConfig)
+      smb2Client = await this.getSMBClient(smbConfig)
+      // 处理路径：移除开头的斜杠，SMB路径不需要开头的斜杠
       const actualPath = remotePath.startsWith('/') ? remotePath.substring(1) : remotePath
+      
+      logger.debug('SMB读取流路径处理', { originalPath: remotePath, actualPath })
 
       return new Promise((resolve, reject) => {
         smb2Client.createReadStream(actualPath, (err, readStream) => {
@@ -244,6 +268,8 @@ class FileSystemService {
         })
       })
     } catch (error) {
+      // 发生错误时也尝试关闭连接
+      this.closeSMBConnection(smb2Client)
       logger.error('创建SMB读取流失败', { remotePath, error: error.message })
       throw new Error(`无法创建SMB读取流: ${error.message}`)
     }
@@ -269,9 +295,14 @@ class FileSystemService {
    * 获取SMB文件信息
    */
   async getSMBFileInfo(smbConfig, remotePath) {
+    let smb2Client = null
+    
     try {
-      const smb2Client = await this.getSMBClient(smbConfig)
+      smb2Client = await this.getSMBClient(smbConfig)
+      // 处理路径：移除开头的斜杠，SMB路径不需要开头的斜杠
       const actualPath = remotePath.startsWith('/') ? remotePath.substring(1) : remotePath
+      
+      logger.debug('SMB文件信息路径处理', { originalPath: remotePath, actualPath })
 
       const stats = await new Promise((resolve, reject) => {
         smb2Client.stat(actualPath, (err, stat) => {
@@ -309,6 +340,8 @@ class FileSystemService {
 
       return result
     } catch (error) {
+      // 发生错误时也尝试关闭连接
+      this.closeSMBConnection(smb2Client)
       logger.error('获取SMB文件信息失败', { remotePath, error: error.message })
       throw new Error(`无法获取SMB文件信息: ${error.message}`)
     }
@@ -391,9 +424,17 @@ class FileSystemService {
    * 浏览本地目录内容
    */
   async browseLocalDirectory(dirPath, options = {}) {
-    const { sort = 'name', order = 'asc', search = '', limit, offset } = options
+    const { sort = 'name', order = 'asc', search = '', limit = 200, offset = 0 } = options
+    const startTime = Date.now()
 
     try {
+      logger.info('开始本地目录浏览', { 
+        dirPath, 
+        limit, 
+        offset,
+        fileCount: 'unknown' 
+      })
+
       // 验证路径安全性
       if (!this.validatePath(dirPath)) {
         throw new Error('无效的路径')
@@ -406,55 +447,111 @@ class FileSystemService {
       }
 
       // 读取目录内容
+      const readdirStart = Date.now()
       const items = await fs.readdir(dirPath)
-      const fileInfos = []
+      
+      logger.info('本地readdir完成', { 
+        dirPath, 
+        fileCount: items.length, 
+        duration: Date.now() - readdirStart 
+      })
 
-      // 获取每个项目的详细信息
-      for (const item of items) {
-        try {
-          const itemPath = path.join(dirPath, item)
-          const info = await this.getItemInfo(itemPath)
-          
-          // 如果有搜索条件，进行过滤
-          if (search && !info.name.toLowerCase().includes(search.toLowerCase())) {
-            continue
-          }
-
-          fileInfos.push(info)
-        } catch (error) {
-          // 跳过无法访问的文件
-          logger.warn('跳过无法访问的文件', { item, error: error.message })
-          continue
-        }
+      // 先进行搜索过滤（如果有搜索条件）
+      let filteredItems = items
+      if (search) {
+        filteredItems = items.filter(item => 
+          item.toLowerCase().includes(search.toLowerCase())
+        )
       }
 
-      // 排序
-      this.sortFiles(fileInfos, sort, order)
+      // 排序文件名（简单排序，不需要stat信息）
+      if (sort === 'name') {
+        filteredItems.sort((a, b) => {
+          const comparison = a.localeCompare(b, 'zh', { numeric: true, sensitivity: 'base' })
+          return order === 'desc' ? -comparison : comparison
+        })
+      }
 
-      // 分页
-      const total = fileInfos.length
-      let paginatedFiles = fileInfos
-      if (limit) {
-        const startIndex = offset || 0
-        paginatedFiles = fileInfos.slice(startIndex, startIndex + limit)
+      // 计算分页
+      const total = filteredItems.length
+      const paginatedItems = filteredItems.slice(offset, offset + limit)
+
+      logger.info('本地分页处理完成', { 
+        totalItems: total,
+        paginatedCount: paginatedItems.length,
+        offset,
+        limit
+      })
+
+      // 只对当前页面的文件获取详细信息
+      const statStart = Date.now()
+      const fileInfos = []
+
+      // 分批并发获取文件信息，避免过多并发请求
+      const batchSize = 50 // 本地文件系统可以更高的并发
+      for (let i = 0; i < paginatedItems.length; i += batchSize) {
+        const batch = paginatedItems.slice(i, i + batchSize)
+        
+        const batchPromises = batch.map(async (item) => {
+          try {
+            const itemPath = path.join(dirPath, item)
+            const info = await this.getItemInfo(itemPath)
+            return info
+          } catch (error) {
+            // 跳过无法访问的文件
+            logger.warn('跳过无法访问的文件', { item, error: error.message })
+            return null
+          }
+        })
+        
+        // 等待当前批次完成
+        const batchResults = await Promise.all(batchPromises)
+        batchResults.forEach(info => {
+          if (info) {
+            fileInfos.push(info)
+          }
+        })
+      }
+
+      logger.info('本地批量stat完成', { 
+        dirPath, 
+        processedCount: fileInfos.length,
+        duration: Date.now() - statStart 
+      })
+
+      // 如果是按照其他属性排序，需要重新排序
+      if (sort !== 'name') {
+        this.sortFiles(fileInfos, sort, order)
       }
 
       // 获取父级目录路径
       const parentPath = path.dirname(dirPath)
       const isRoot = dirPath === parentPath
 
-      return {
+      const result = {
         current_path: dirPath,
         parent_path: isRoot ? null : parentPath,
-        files: paginatedFiles,
+        files: fileInfos,
         total,
-        pagination: limit ? {
+        pagination: {
           limit,
-          offset: offset || 0,
+          offset,
           total,
-          has_more: (offset || 0) + limit < total
-        } : null
+          has_more: offset + limit < total,
+          current_page: Math.floor(offset / limit) + 1,
+          total_pages: Math.ceil(total / limit)
+        }
       }
+
+      logger.info('本地目录浏览完成', { 
+        dirPath, 
+        returnedFiles: result.files.length,
+        totalFiles: result.total,
+        hasMore: result.pagination.has_more,
+        totalDuration: Date.now() - startTime 
+      })
+
+      return result
     } catch (error) {
       logger.error('浏览本地目录失败', { dirPath, error: error.message })
       throw new Error(`无法浏览目录: ${error.message}`)

@@ -296,7 +296,7 @@ const browseSchemas = {
         sort: Joi.string().valid('name', 'type', 'size', 'modified').default('name'),
         order: Joi.string().valid('asc', 'desc').default('asc'),
         search: Joi.string().allow('').max(100),
-        limit: Joi.number().integer().min(1).max(100),
+        limit: Joi.number().integer().min(1).max(500).default(200), // 支持更大的分页限制，默认200
         offset: Joi.number().integer().min(0).default(0)
     }),
 
@@ -307,6 +307,12 @@ const browseSchemas = {
 
     search: Joi.object({
         q: Joi.string().min(1).max(100).required(),
+        extensions: Joi.string().allow(''),
+        type: Joi.string().valid('all', 'file', 'directory').default('all'),
+        sort: Joi.string().valid('relevance', 'name', 'size', 'modified').default('relevance'),
+        order: Joi.string().valid('asc', 'desc').default('desc'),
+        limit: Joi.number().integer().min(1).max(500).default(100),
+        offset: Joi.number().integer().min(0).default(0),
         token: Joi.string().allow('')
     })
 };

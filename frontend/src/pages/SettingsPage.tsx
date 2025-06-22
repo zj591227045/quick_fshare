@@ -9,7 +9,7 @@ import {
   InputNumber, 
   Typography, 
   Space,
-  Divider,
+
   message,
   Tabs
 } from 'antd';
@@ -17,8 +17,10 @@ import {
   SettingOutlined, 
   SecurityScanOutlined, 
   DatabaseOutlined,
-  BellOutlined
+  BellOutlined,
+  BgColorsOutlined
 } from '@ant-design/icons';
+import ThemeSettings from '@/components/ThemeSettings';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -45,19 +47,19 @@ const SettingsPage: React.FC = () => {
       key: 'general',
       label: (
         <Space>
-          <SettingOutlined />
-          <span>常规设置</span>
+          <SettingOutlined style={{ color: 'var(--text-primary)' }} />
+          <span style={{ color: 'var(--text-primary)' }}>常规设置</span>
         </Space>
       ),
       children: (
-        <Card>
+        <Card style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-secondary)' }}>
           <Form
             form={form}
             layout="vertical"
             onFinish={handleSave}
             initialValues={{
               systemName: 'Quick FShare',
-              description: '局域网文件分享系统',
+              description: '私有文件分享系统',
               maxFileSize: 100,
               allowUpload: true,
               enableThumbnails: true,
@@ -66,35 +68,55 @@ const SettingsPage: React.FC = () => {
           >
             <Form.Item
               name="systemName"
-              label="系统名称"
+              label={<span style={{ color: 'var(--text-primary)' }}>系统名称</span>}
               rules={[{ required: true, message: '请输入系统名称' }]}
             >
-              <Input placeholder="请输入系统名称" />
+              <Input 
+                placeholder="请输入系统名称" 
+                style={{ 
+                  backgroundColor: 'var(--bg-secondary)', 
+                  borderColor: 'var(--border-color)',
+                  color: 'var(--text-primary)'
+                }} 
+              />
             </Form.Item>
 
             <Form.Item
               name="description"
-              label="系统描述"
+              label={<span style={{ color: 'var(--text-primary)' }}>系统描述</span>}
             >
-              <Input.TextArea placeholder="请输入系统描述" rows={3} />
+              <Input.TextArea 
+                placeholder="请输入系统描述" 
+                rows={3}
+                style={{ 
+                  backgroundColor: 'var(--bg-secondary)', 
+                  borderColor: 'var(--border-color)',
+                  color: 'var(--text-primary)'
+                }} 
+              />
             </Form.Item>
 
             <Form.Item
               name="maxFileSize"
-              label="最大文件大小 (MB)"
+              label={<span style={{ color: 'var(--text-primary)' }}>最大文件大小 (MB)</span>}
               rules={[{ required: true, message: '请输入最大文件大小' }]}
             >
               <InputNumber 
                 min={1} 
                 max={1024} 
-                style={{ width: '100%' }}
+                style={{ 
+                  width: '100%',
+                  backgroundColor: 'var(--bg-secondary)', 
+                  borderColor: 'var(--border-color)',
+                  color: 'var(--text-primary)'
+                }}
                 placeholder="请输入最大文件大小"
               />
             </Form.Item>
 
             <Form.Item
               name="allowUpload"
-              label="允许上传文件"
+              label={<span style={{ color: 'var(--text-primary)' }}>允许上传文件</span>}
               valuePropName="checked"
             >
               <Switch />
@@ -102,7 +124,7 @@ const SettingsPage: React.FC = () => {
 
             <Form.Item
               name="enableThumbnails"
-              label="启用缩略图"
+              label={<span style={{ color: 'var(--text-primary)' }}>启用缩略图</span>}
               valuePropName="checked"
             >
               <Switch />
@@ -110,10 +132,16 @@ const SettingsPage: React.FC = () => {
 
             <Form.Item
               name="defaultLanguage"
-              label="默认语言"
+              label={<span style={{ color: 'var(--text-primary)' }}>默认语言</span>}
               rules={[{ required: true, message: '请选择默认语言' }]}
             >
-              <Select placeholder="请选择默认语言">
+              <Select 
+                placeholder="请选择默认语言"
+                style={{ 
+                  backgroundColor: 'var(--bg-secondary)', 
+                  borderColor: 'var(--border-color)'
+                }}
+              >
                 <Option value="zh-CN">简体中文</Option>
                 <Option value="en-US">English</Option>
               </Select>
@@ -132,12 +160,12 @@ const SettingsPage: React.FC = () => {
       key: 'security',
       label: (
         <Space>
-          <SecurityScanOutlined />
-          <span>安全设置</span>
+          <SecurityScanOutlined style={{ color: 'var(--text-primary)' }} />
+          <span style={{ color: 'var(--text-primary)' }}>安全设置</span>
         </Space>
       ),
       children: (
-        <Card>
+        <Card style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-secondary)' }}>
           <Form
             layout="vertical"
             initialValues={{
@@ -150,7 +178,7 @@ const SettingsPage: React.FC = () => {
           >
             <Form.Item
               name="enableAuth"
-              label="启用身份验证"
+              label={<span style={{ color: 'var(--text-primary)' }}>启用身份验证</span>}
               valuePropName="checked"
             >
               <Switch />
@@ -158,31 +186,41 @@ const SettingsPage: React.FC = () => {
 
             <Form.Item
               name="sessionTimeout"
-              label="会话超时时间 (小时)"
+              label={<span style={{ color: 'var(--text-primary)' }}>会话超时时间 (小时)</span>}
             >
               <InputNumber 
                 min={1} 
                 max={168} 
-                style={{ width: '100%' }}
+                style={{ 
+                  width: '100%',
+                  backgroundColor: 'var(--bg-secondary)', 
+                  borderColor: 'var(--border-color)',
+                  color: 'var(--text-primary)'
+                }}
                 placeholder="请输入会话超时时间"
               />
             </Form.Item>
 
             <Form.Item
               name="maxLoginAttempts"
-              label="最大登录尝试次数"
+              label={<span style={{ color: 'var(--text-primary)' }}>最大登录尝试次数</span>}
             >
               <InputNumber 
                 min={1} 
                 max={10} 
-                style={{ width: '100%' }}
+                style={{ 
+                  width: '100%',
+                  backgroundColor: 'var(--bg-secondary)', 
+                  borderColor: 'var(--border-color)',
+                  color: 'var(--text-primary)'
+                }}
                 placeholder="请输入最大登录尝试次数"
               />
             </Form.Item>
 
             <Form.Item
               name="enableRateLimit"
-              label="启用访问频率限制"
+              label={<span style={{ color: 'var(--text-primary)' }}>启用访问频率限制</span>}
               valuePropName="checked"
             >
               <Switch />
@@ -190,15 +228,15 @@ const SettingsPage: React.FC = () => {
 
             <Form.Item
               name="enableHttps"
-              label="启用 HTTPS"
+              label={<span style={{ color: 'var(--text-primary)' }}>启用 HTTPS</span>}
               valuePropName="checked"
             >
               <Switch />
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit">
-                保存安全设置
+              <Button type="primary" htmlType="submit" loading={loading}>
+                保存设置
               </Button>
             </Form.Item>
           </Form>
@@ -342,19 +380,28 @@ const SettingsPage: React.FC = () => {
         </Card>
       ),
     },
+    {
+      key: 'theme',
+      label: (
+        <Space>
+          <BgColorsOutlined style={{ color: 'var(--text-primary)' }} />
+          <span style={{ color: 'var(--text-primary)' }}>主题设置</span>
+        </Space>
+      ),
+      children: <ThemeSettings />,
+    },
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Title level={2} style={{ marginBottom: 24 }}>
+    <div style={{ padding: '24px', background: 'var(--bg-color)' }}>
+      <Title level={2} style={{ marginBottom: 24, color: 'var(--text-primary)' }}>
         系统设置
       </Title>
       
       <Tabs 
         defaultActiveKey="general" 
-        items={items}
-        tabPosition="left"
-        style={{ minHeight: '600px' }}
+        items={items} 
+        style={{ background: 'var(--bg-color)' }}
       />
     </div>
   );

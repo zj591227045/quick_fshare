@@ -81,6 +81,28 @@ function verifyToken(token, expectedType = null) {
 }
 
 /**
+ * 验证临时令牌（简化版本，用于分享访问）
+ */
+function verifyTemporaryToken(token, shareId) {
+    try {
+        const { valid, decoded } = verifyToken(token, 'temporary');
+        
+        if (!valid) {
+            return false;
+        }
+        
+        // 验证分享ID是否匹配
+        if (decoded.shareId !== parseInt(shareId)) {
+            return false;
+        }
+        
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+/**
  * 从请求中提取令牌
  */
 function extractToken(req) {
@@ -418,6 +440,7 @@ module.exports = {
     
     // 令牌验证函数
     verifyToken,
+    verifyTemporaryToken,
     extractToken,
     
     // 认证中间件

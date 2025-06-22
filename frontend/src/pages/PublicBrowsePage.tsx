@@ -28,6 +28,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { sharesApi } from '@/services/api';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const { Title, Text, Paragraph } = Typography;
 const { Search } = Input;
@@ -43,11 +44,33 @@ interface PublicShare {
 
 const PublicBrowsePage: React.FC = () => {
   const { message } = App.useApp();
+  const { actualMode } = useTheme();
   const [shares, setShares] = useState<PublicShare[]>([]);
   const [filteredShares, setFilteredShares] = useState<PublicShare[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+
+  // 根据主题模式获取背景渐变
+  const getBackgroundGradient = () => {
+    if (actualMode === 'dark') {
+      return 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)';
+    }
+    return 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+  };
+
+  // 根据主题模式获取文字颜色
+  const getTextColor = () => {
+    return actualMode === 'dark' ? 'rgba(255,255,255,0.9)' : '#fff';
+  };
+
+  const getSecondaryTextColor = () => {
+    return actualMode === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.8)';
+  };
+
+  const getFooterTextColor = () => {
+    return actualMode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.7)';
+  };
 
   // 加载公开分享列表
   const loadPublicShares = async () => {
@@ -122,8 +145,9 @@ const PublicBrowsePage: React.FC = () => {
   return (
     <div style={{ 
       minHeight: '100vh', 
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '24px'
+      background: getBackgroundGradient(),
+      padding: '24px',
+      transition: 'background 0.3s ease'
     }}>
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
         {/* 头部区域 */}
@@ -132,23 +156,36 @@ const PublicBrowsePage: React.FC = () => {
             size={80} 
             icon={<GlobalOutlined />} 
             style={{ 
-              backgroundColor: '#fff', 
-              color: '#1890ff',
+              backgroundColor: actualMode === 'dark' ? 'rgba(255,255,255,0.15)' : '#fff', 
+              color: actualMode === 'dark' ? '#fff' : '#1890ff',
               marginBottom: 24,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+              boxShadow: actualMode === 'dark' 
+                ? '0 4px 12px rgba(0,0,0,0.4)' 
+                : '0 4px 12px rgba(0,0,0,0.15)',
+              border: actualMode === 'dark' ? '2px solid rgba(255,255,255,0.2)' : 'none'
             }} 
           />
-          <Title level={1} style={{ color: '#fff', marginBottom: 8, fontSize: '3rem' }}>
+          <Title level={1} style={{ 
+            color: getTextColor(), 
+            marginBottom: 8, 
+            fontSize: '3rem',
+            textShadow: actualMode === 'dark' ? '0 2px 4px rgba(0,0,0,0.5)' : 'none'
+          }}>
             Quick FShare
           </Title>
-          <Paragraph style={{ color: 'rgba(255,255,255,0.8)', fontSize: '18px', marginBottom: 32 }}>
-            简单、安全、美观的局域网文件分享系统
+          <Paragraph style={{ 
+            color: getSecondaryTextColor(), 
+            fontSize: '18px', 
+            marginBottom: 32,
+            textShadow: actualMode === 'dark' ? '0 1px 2px rgba(0,0,0,0.5)' : 'none'
+          }}>
+            简单、安全、美观的私有文件分享系统
           </Paragraph>
           
           {/* 搜索框 */}
           <div style={{ maxWidth: '400px', margin: '0 auto' }}>
             <Search
-              placeholder="搜索分享资源..."
+              placeholder="搜索分享列表..."
               allowClear
               size="large"
               value={searchQuery}
@@ -156,7 +193,9 @@ const PublicBrowsePage: React.FC = () => {
               prefix={<SearchOutlined />}
               style={{
                 borderRadius: '25px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                boxShadow: actualMode === 'dark' 
+                  ? '0 4px 12px rgba(0,0,0,0.4)' 
+                  : '0 4px 12px rgba(0,0,0,0.15)'
               }}
             />
           </div>
@@ -166,8 +205,16 @@ const PublicBrowsePage: React.FC = () => {
         <Card 
           style={{ 
             borderRadius: '16px',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-            border: 'none'
+            boxShadow: actualMode === 'dark' 
+              ? '0 8px 24px rgba(0,0,0,0.4)' 
+              : '0 8px 24px rgba(0,0,0,0.12)',
+            border: actualMode === 'dark' 
+              ? '1px solid rgba(255,255,255,0.1)' 
+              : 'none',
+            background: actualMode === 'dark' 
+              ? 'rgba(255,255,255,0.05)' 
+              : undefined,
+            backdropFilter: actualMode === 'dark' ? 'blur(10px)' : undefined
           }}
           bodyStyle={{ padding: '32px' }}
         >
@@ -175,8 +222,8 @@ const PublicBrowsePage: React.FC = () => {
             <Row align="middle" justify="space-between">
               <Col>
                 <Space align="center">
-                  <ShareAltOutlined style={{ fontSize: '20px', color: '#1890ff' }} />
-                  <Title level={3} style={{ margin: 0 }}>
+                  <ShareAltOutlined style={{ fontSize: '20px', color: 'var(--primary-color)' }} />
+                  <Title level={3} style={{ margin: 0, color: 'var(--text-primary)' }}>
                     可用分享 ({filteredShares.length})
                   </Title>
                 </Space>
@@ -186,6 +233,7 @@ const PublicBrowsePage: React.FC = () => {
                   type="text" 
                   icon={<ShareAltOutlined />}
                   onClick={loadPublicShares}
+                  style={{ color: 'var(--text-secondary)' }}
                 >
                   刷新
                 </Button>
@@ -196,14 +244,14 @@ const PublicBrowsePage: React.FC = () => {
           {loading ? (
             <div style={{ textAlign: 'center', padding: '80px 0' }}>
               <Spin size="large" />
-              <div style={{ marginTop: 16, color: '#8c8c8c' }}>加载中...</div>
+              <div style={{ marginTop: 16, color: 'var(--text-secondary)' }}>加载中...</div>
             </div>
           ) : filteredShares.length === 0 ? (
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
               description={
                 <div>
-                  <div style={{ marginBottom: 8 }}>
+                  <div style={{ marginBottom: 8, color: 'var(--text-secondary)' }}>
                     {searchQuery ? '没有找到匹配的分享' : '暂无可用的分享'}
                   </div>
                   {searchQuery && (
@@ -234,8 +282,13 @@ const PublicBrowsePage: React.FC = () => {
                     style={{ 
                       borderRadius: '12px',
                       overflow: 'hidden',
-                      border: '1px solid #f0f0f0',
-                      transition: 'all 0.3s ease'
+                      border: actualMode === 'dark' 
+                        ? '1px solid rgba(255,255,255,0.1)' 
+                        : '1px solid #f0f0f0',
+                      transition: 'all 0.3s ease',
+                      background: actualMode === 'dark' 
+                        ? 'rgba(255,255,255,0.05)' 
+                        : undefined
                     }}
                     bodyStyle={{ padding: '20px' }}
                     actions={[
@@ -257,7 +310,10 @@ const PublicBrowsePage: React.FC = () => {
                       </div>
                       
                       <div style={{ marginBottom: 12 }}>
-                        <Title level={5} ellipsis={{ tooltip: item.name }} style={{ margin: 0 }}>
+                        <Title level={5} ellipsis={{ tooltip: item.name }} style={{ 
+                          margin: 0, 
+                          color: 'var(--text-primary)' 
+                        }}>
                           {item.name}
                         </Title>
                       </div>
@@ -279,7 +335,7 @@ const PublicBrowsePage: React.FC = () => {
                       <div style={{ minHeight: '40px' }}>
                         <Text 
                           type="secondary" 
-                          ellipsis={{ rows: 2, tooltip: item.description }}
+                          ellipsis={{ tooltip: item.description }}
                           style={{ fontSize: '13px' }}
                         >
                           {item.description || '暂无描述'}
@@ -303,8 +359,12 @@ const PublicBrowsePage: React.FC = () => {
 
         {/* 底部信息 */}
         <div style={{ textAlign: 'center', marginTop: 48 }}>
-          <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: '14px' }}>
-            Powered by Quick FShare | 局域网文件分享解决方案
+          <Text style={{ 
+            color: getFooterTextColor(), 
+            fontSize: '14px',
+            textShadow: actualMode === 'dark' ? '0 1px 2px rgba(0,0,0,0.5)' : 'none'
+          }}>
+            Powered by Quick FShare | 私有文件分享解决方案
           </Text>
         </div>
       </div>
