@@ -703,6 +703,7 @@ const BrowsePage: React.FC = () => {
         shareId={shareId!}
         shareName={shareInfo?.name}
         shareType={shareInfo?.type}
+        token={accessToken}
         onFileSelect={(file) => {
           // 如果选中文件，导航到该文件的父目录
           const pathParts = file.path.split('/').filter(Boolean);

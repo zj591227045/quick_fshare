@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Button, Space, Tag, Typography, Modal, Form, Input, Select, Collapse, App, Switch } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, LinkOutlined, FolderOutlined, DatabaseOutlined, CloudServerOutlined } from '@ant-design/icons';
+import { Card, Table, Button, Space, Tag, Typography, Modal, Form, Input, Select, Collapse, App, Switch, Drawer, Tooltip } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, LinkOutlined, FolderOutlined, DatabaseOutlined, CloudServerOutlined, SettingOutlined, ReloadOutlined, BulkOutlined, ClearOutlined } from '@ant-design/icons';
 import { SharePath, CreateShareRequest } from '@/types';
-import { sharesApi } from '@/services/api';
+import { sharesApi, browseApi } from '@/services/api';
+import IndexStatusCard from '@/components/IndexStatusCard';
+import IndexManagementPanel from '@/components/IndexManagementPanel';
+import IncrementalConfigModal from '@/components/IncrementalConfigModal';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -16,6 +19,12 @@ const SharesPage: React.FC = () => {
   const [editingShare, setEditingShare] = useState<SharePath | null>(null);
   const [form] = Form.useForm();
   const [shareType, setShareType] = useState<'local' | 'smb' | 'nfs'>('local');
+  
+  // 索引管理相关状态
+  const [indexDrawerVisible, setIndexDrawerVisible] = useState(false);
+  const [configModalVisible, setConfigModalVisible] = useState(false);
+  const [selectedShareIds, setSelectedShareIds] = useState<number[]>([]);
+  const [batchOperating, setBatchOperating] = useState(false);
 
   // 加载分享列表
   const loadShares = async () => {
@@ -104,7 +113,7 @@ const SharesPage: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 200,
+      width: 260,
       render: (_: any, record: SharePath) => (
         <Space size="small">
           <Button 
@@ -114,6 +123,14 @@ const SharesPage: React.FC = () => {
             onClick={() => handleCopyLink(record)}
           >
             复制链接
+          </Button>
+          <Button 
+            type="link" 
+            icon={<DatabaseOutlined />}
+            size="small"
+            onClick={() => handleOpenIndexDrawer(record)}
+          >
+            索引管理
           </Button>
           <Button 
             type="link" 
@@ -282,14 +299,106 @@ const SharesPage: React.FC = () => {
     }
   };
 
+  // 索引管理相关处理函数
+  const handleOpenIndexDrawer = (share: SharePath) => {
+    setEditingShare(share);
+    setIndexDrawerVisible(true);
+  };
+
+  const handleBatchRebuildIndex = async () => {
+    if (selectedShareIds.length === 0) {
+      message.warning('请先选择要重建索引的分享');
+      return;
+    }
+
+    setBatchOperating(true);
+    try {
+      const response = await browseApi.batchRebuildIndex(selectedShareIds);
+      if (response.success) {
+        message.success(`已开始重建 ${selectedShareIds.length} 个分享的索引`);
+        setSelectedShareIds([]);
+      } else {
+        message.error(response.message || '批量重建索引失败');
+      }
+    } catch (error) {
+      message.error('批量重建索引失败');
+    } finally {
+      setBatchOperating(false);
+    }
+  };
+
+  const handleCleanupIndexes = async () => {
+    Modal.confirm({
+      title: '确认清理索引',
+      content: '确定要清理所有过期和无效的索引文件吗？此操作不可撤销。',
+      onOk: async () => {
+        try {
+          const response = await browseApi.cleanupIndexes();
+          if (response.success) {
+            message.success('索引清理完成');
+          } else {
+            message.error(response.message || '索引清理失败');
+          }
+        } catch (error) {
+          message.error('索引清理失败');
+        }
+      },
+    });
+  };
+
+  const handleConfigIncrementalUpdate = () => {
+    setConfigModalVisible(true);
+  };
+
+  // 表格行选择配置
+  const rowSelection = {
+    selectedRowKeys: selectedShareIds,
+    onChange: (selectedRowKeys: React.Key[]) => {
+      setSelectedShareIds(selectedRowKeys as number[]);
+    },
+  };
+
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <Title level={2}>分享管理</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          新建分享
-        </Button>
+        <Space>
+          <Button icon={<SettingOutlined />} onClick={handleConfigIncrementalUpdate}>
+            增量更新配置
+          </Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+            新建分享
+          </Button>
+        </Space>
       </div>
+
+      {/* 批量操作工具栏 */}
+      {selectedShareIds.length > 0 && (
+        <Card size="small" style={{ marginBottom: 16 }}>
+          <Space>
+            <span>已选择 {selectedShareIds.length} 个分享</span>
+            <Button
+              type="primary"
+              size="small"
+              icon={<ReloadOutlined />}
+              loading={batchOperating}
+              onClick={handleBatchRebuildIndex}
+            >
+              批量重建索引
+            </Button>
+            <Button
+              size="small"
+              icon={<ClearOutlined />}
+              onClick={handleCleanupIndexes}
+            >
+              清理索引
+            </Button>
+            <Button size="small" onClick={() => setSelectedShareIds([])}>
+              取消选择
+            </Button>
+          </Space>
+        </Card>
+      )}
       
       <Card variant="outlined">
         <Table
@@ -297,6 +406,7 @@ const SharesPage: React.FC = () => {
           dataSource={shares}
           rowKey="id"
           loading={loading}
+          rowSelection={rowSelection}
           pagination={{
             total: shares.length,
             pageSize: 10,
@@ -505,6 +615,32 @@ const SharesPage: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
+
+      {/* 索引管理抽屉 */}
+      <Drawer
+        title="索引管理"
+        open={indexDrawerVisible}
+        onClose={() => setIndexDrawerVisible(false)}
+        width={900}
+        placement="right"
+      >
+        {editingShare && (
+          <IndexManagementPanel
+            shareId={editingShare.id}
+            shareName={editingShare.name}
+            shareType={editingShare.type}
+          />
+        )}
+      </Drawer>
+
+      {/* 增量更新配置模态框 */}
+      <IncrementalConfigModal
+        visible={configModalVisible}
+        onClose={() => setConfigModalVisible(false)}
+        onSuccess={() => {
+          message.success('配置已更新，将在下次检查时生效');
+        }}
+      />
     </div>
   );
 };

@@ -90,7 +90,7 @@ const SearchModal: React.FC<SearchModalProps> = ({
     
     setLoadingStatus(true);
     try {
-      const response = await browseApi.getSearchStatus(shareId);
+      const response = await browseApi.getSearchStatus(shareId, token);
       if (response.success) {
         setIndexStatus(response.data.indexStatus);
       }

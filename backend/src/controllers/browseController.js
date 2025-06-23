@@ -537,6 +537,24 @@ class BrowseController {
         })
       }
 
+      if (!share.enabled) {
+        return res.status(403).json({
+          success: false,
+          message: '分享路径已禁用'
+        })
+      }
+
+      // 检查密码保护，但如果是管理员则跳过
+      if (share.accessType === 'password' && !req.isAdmin) {
+        const token = req.query.token || req.headers['x-access-token']
+        if (!token || !verifyTemporaryToken(token, share.id)) {
+          return res.status(401).json({
+            success: false,
+            message: '需要密码验证'
+          })
+        }
+      }
+
       const { getSearchIndexService } = require('../services/SearchIndexService')
       const searchService = getSearchIndexService()
       
@@ -626,7 +644,8 @@ class BrowseController {
       
       // 获取所有分享的索引状态
       const Share = require('../models/Share')
-      const shares = await Share.getAll()
+      const sharesResult = await Share.findAll()
+      const shares = sharesResult.shares
       
       const indexInfo = await Promise.all(shares.map(async (share) => {
         const status = searchService.getIndexStatus(share.id)
@@ -829,6 +848,35 @@ class BrowseController {
       res.status(500).json({
         success: false,
         message: `配置失败: ${error.message}`
+      })
+    }
+  }
+
+  /**
+   * 获取增量更新配置
+   */
+  async getIncrementalConfig(req, res) {
+    try {
+      const { getSearchIndexService } = require('../services/SearchIndexService')
+      const searchService = getSearchIndexService()
+      
+      // 获取当前配置
+      const config = {
+        enabled: searchService.config.enableIncrementalUpdate,
+        checkInterval: searchService.config.incrementalCheckInterval,
+        fullRebuildThreshold: searchService.config.fullRebuildThreshold
+      }
+
+      res.json({
+        success: true,
+        data: config,
+        message: '获取配置成功'
+      })
+    } catch (error) {
+      logger.error('获取增量更新配置失败', { error: error.message })
+      res.status(500).json({
+        success: false,
+        message: `获取配置失败: ${error.message}`
       })
     }
   }

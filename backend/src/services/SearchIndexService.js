@@ -1451,9 +1451,11 @@ class SearchIndexService extends EventEmitter {
    * 获取增量更新统计信息
    */
   getIncrementalUpdateStats(shareId) {
-    const status = this.indexStatus.get(shareId)
-    if (!status) {
-      return null
+    const status = this.indexStatus.get(shareId) || {
+      status: 'not_built',
+      lastUpdated: null,
+      lastIncrementalUpdate: null,
+      changesApplied: null
     }
 
     return {

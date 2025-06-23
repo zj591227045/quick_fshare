@@ -340,16 +340,72 @@ class ApiClient {
         skipAuth401: true, // 跳过401拦截，让组件自己处理密码验证
       }) as Promise<BrowseResponse>,
 
-    getSearchStatus: (shareId: string | number): Promise<ApiResponse<any>> =>
+    getSearchStatus: (shareId: string | number, token?: string): Promise<ApiResponse<any>> =>
       this.request({
         method: 'GET',
         url: `/browse/${shareId}/search-status`,
+        params: token ? { token } : undefined,
+        skipAuth401: true, // 跳过401拦截，让组件自己处理密码验证
+      }),
+
+    getAdminSearchStatus: (shareId: string | number): Promise<ApiResponse<any>> =>
+      this.request({
+        method: 'GET',
+        url: `/browse/admin/${shareId}/search-status`,
       }),
 
     rebuildIndex: (shareId: string | number): Promise<ApiResponse<any>> =>
       this.request({
         method: 'POST',
         url: `/browse/${shareId}/rebuild-index`,
+      }),
+
+    triggerIncrementalUpdate: (shareId: string | number): Promise<ApiResponse<any>> =>
+      this.request({
+        method: 'POST',
+        url: `/browse/${shareId}/incremental-update`,
+      }),
+
+    getIncrementalStats: (shareId: string | number): Promise<ApiResponse<any>> =>
+      this.request({
+        method: 'GET',
+        url: `/browse/${shareId}/incremental-stats`,
+      }),
+
+    getIndexManagement: (): Promise<ApiResponse<any>> =>
+      this.request({
+        method: 'GET',
+        url: '/browse/admin/index-management',
+      }),
+
+    batchRebuildIndex: (shareIds: number[]): Promise<ApiResponse<any>> =>
+      this.request({
+        method: 'POST',
+        url: '/browse/admin/batch-rebuild-index',
+        data: { shareIds },
+      }),
+
+    cleanupIndexes: (): Promise<ApiResponse<any>> =>
+      this.request({
+        method: 'POST',
+        url: '/browse/admin/cleanup-indexes',
+      }),
+
+    configureIncrementalUpdate: (config: {
+      enabled?: boolean;
+      checkInterval?: number;
+      fullRebuildThreshold?: number;
+    }): Promise<ApiResponse<any>> =>
+      this.request({
+        method: 'POST',
+        url: '/browse/admin/configure-incremental',
+        data: config,
+      }),
+
+    getIncrementalConfig: (): Promise<ApiResponse<any>> =>
+      this.request({
+        method: 'GET',
+        url: '/browse/admin/incremental-config',
       }),
   }
 
