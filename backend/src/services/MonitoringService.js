@@ -155,7 +155,7 @@ class MonitoringService {
         cpu: {
           count: cpus.length,
           model: cpus[0]?.model || 'Unknown',
-          usage: cpuUsage,
+          usage: cpuUsage.usage_percentage,
           speed: cpus[0]?.speed || 0
         },
         memory: {
@@ -182,21 +182,64 @@ class MonitoringService {
    */
   async getCpuUsage() {
     try {
-      // 在Linux/macOS上使用top命令
-      if (os.platform() !== 'win32') {
-        const output = execSync('top -l 1 -n 0 | grep "CPU usage"').toString()
-        const match = output.match(/(\d+\.?\d*)%\s+user/)
-        return match ? parseFloat(match[1]) : 0
+      if (os.platform() === 'linux') {
+        // Linux系统使用/proc/stat
+        try {
+          const output = execSync('cat /proc/stat | head -1').toString()
+          const values = output.split(/\s+/).slice(1).map(Number)
+          
+          // 计算总时间
+          const idle = values[3]
+          const total = values.reduce((sum, time) => sum + time, 0)
+          const usage = Math.round(((total - idle) / total) * 100)
+          
+          return { usage_percentage: usage }
+        } catch (error) {
+          // 降级到使用 top 命令（如果可用）
+          try {
+            const output = execSync('top -bn1 | grep "Cpu(s)"').toString()
+            const match = output.match(/(\d+\.?\d*)%.*us/)
+            if (match) {
+              return { usage_percentage: parseFloat(match[1]) }
+            }
+          } catch (topError) {
+            // 如果都失败，返回默认值
+            return { usage_percentage: 0 }
+          }
+        }
+      } else if (os.platform() === 'darwin') {
+        // macOS系统
+        try {
+          const output = execSync('top -l 1 -n 0 | grep "CPU usage"').toString()
+          const match = output.match(/(\d+\.?\d*)% user/)
+          if (match) {
+            return { usage_percentage: parseFloat(match[1]) }
+          }
+        } catch (error) {
+          return { usage_percentage: 0 }
+        }
       } else {
-        // Windows上使用wmic
-        const output = execSync('wmic cpu get loadpercentage /value').toString()
-        const match = output.match(/LoadPercentage=(\d+)/)
-        return match ? parseFloat(match[1]) : 0
+        // 其他系统或容器环境，使用Node.js内置方法
+        const cpus = os.cpus()
+        let user = 0, nice = 0, sys = 0, idle = 0, irq = 0
+        
+        for (const cpu of cpus) {
+          user += cpu.times.user
+          nice += cpu.times.nice
+          sys += cpu.times.sys
+          idle += cpu.times.idle
+          irq += cpu.times.irq
+        }
+        
+        const total = user + nice + sys + idle + irq
+        const usage = Math.round(((total - idle) / total) * 100)
+        return { usage_percentage: usage }
       }
+      
+      return { usage_percentage: 0 }
     } catch (error) {
-      // 如果命令失败，返回进程CPU使用率的近似值
-      const usage = process.cpuUsage()
-      return Math.round((usage.user + usage.system) / 10000) / 100
+      logger.error('获取CPU使用率失败', { error: error.message })
+      return { usage_percentage: 0 }
     }
   }
 
@@ -205,33 +248,54 @@ class MonitoringService {
    */
   async getDiskUsage() {
     try {
-      const dataDir = path.join(process.cwd(), 'data')
+      // 优先使用环境变量中的数据路径，然后是相对路径
+      const dataDir = process.env.DB_PATH ? path.dirname(process.env.DB_PATH) : path.join(process.cwd(), 'data')
       
       let diskInfo = {}
       
       if (os.platform() !== 'win32') {
         // Unix-like系统使用df命令
         try {
-          const output = execSync(`df -h "${dataDir}"`).toString()
+          // 首先检查目录是否存在
+          await fs.access(dataDir).catch(() => {
+            // 如果目录不存在，创建它
+            return fs.mkdir(dataDir, { recursive: true })
+          })
+          
+          const output = execSync(`df -h "${dataDir}" 2>/dev/null || df -h / 2>/dev/null`).toString()
           const lines = output.split('\n')
           if (lines.length > 1) {
             const parts = lines[1].split(/\s+/)
             diskInfo = {
-              total: parts[1],
-              used: parts[2],
-              available: parts[3],
-              usage_percentage: parseFloat(parts[4].replace('%', ''))
+              total: parts[1] || 'Unknown',
+              used: parts[2] || 'Unknown',
+              available: parts[3] || 'Unknown',
+              usage_percentage: parts[4] ? parseFloat(parts[4].replace('%', '')) : 0
             }
           }
         } catch (error) {
           // 如果df命令失败，使用基本的文件系统信息
-          const stats = await fs.stat(dataDir).catch(() => null)
-          if (stats) {
+          logger.debug('df命令失败，使用基本文件系统信息', { error: error.message })
+          
+          try {
+            const stats = await fs.stat(dataDir)
             diskInfo = {
               total: 'Unknown',
               used: 'Unknown',
               available: 'Unknown',
-              usage_percentage: 0
+              usage_percentage: 0,
+              data_dir: dataDir,
+              dir_exists: true
+            }
+          } catch (statError) {
+            diskInfo = {
+              total: 'Unknown',
+              used: 'Unknown', 
+              available: 'Unknown',
+              usage_percentage: 0,
+              data_dir: dataDir,
+              dir_exists: false,
+              error: 'Directory not accessible'
             }
           }
         }
