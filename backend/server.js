@@ -56,6 +56,16 @@ app.use('/api/shares', sharesRoutes);
 app.use('/api/browse', browseRoutes);
 app.use('/api/system', systemRoutes);
 
+// 缩略图路由 - 为了兼容前端API调用，添加独立的thumbnail路由
+const BrowseController = require('./src/controllers/browseController');
+const browseController = new BrowseController();
+const { browseRateLimit } = require('./src/middleware/rateLimit');
+
+app.get('/api/thumbnail/:shareId/*', 
+  browseRateLimit,
+  browseController.getThumbnail.bind(browseController)
+);
+
 // 错误处理
 app.use((err, req, res, next) => {
   console.error(err.stack);
