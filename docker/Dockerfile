@@ -56,8 +56,7 @@ RUN echo 'user nginx;' > /etc/nginx/nginx.conf && \
     echo '  include /etc/nginx/conf.d/*.conf;' >> /etc/nginx/nginx.conf && \
     echo '}' >> /etc/nginx/nginx.conf
 
-# 创建nginx用户
-RUN addgroup -g 101 -S nginx && adduser -S -D -H -u 101 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx
+# nginx用户已由nginx包自动创建
 
 # ======== 设置应用目录结构 ========
 RUN mkdir -p \
