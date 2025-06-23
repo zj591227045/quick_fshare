@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import { getApiConfig, ApiConfig } from '@/utils/apiConfig'
 import {
   LoginRequest,
   LoginResponse,
@@ -14,6 +15,8 @@ import {
   ThemeConfig,
 } from '@/types'
 
+
+
 class ApiClient {
   private client: AxiosInstance
   private refreshing = false
@@ -21,10 +24,12 @@ class ApiClient {
     resolve: (token: string) => void
     reject: (error: any) => void
   }> = []
+  private config: ApiConfig | null = null
 
   constructor() {
+    // 使用临时配置创建client，稍后会更新
     this.client = axios.create({
-      baseURL: (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:3001/api',
+      baseURL: '/api',
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
@@ -32,6 +37,53 @@ class ApiClient {
     })
 
     this.setupInterceptors()
+    this.initializeConfig()
+  }
+
+  /**
+   * 异步初始化配置
+   */
+  private async initializeConfig() {
+    try {
+      this.config = await getApiConfig()
+      
+      // 更新axios实例的配置
+      this.client.defaults.baseURL = this.config.baseURL
+      this.client.defaults.timeout = this.config.timeout
+      
+      console.log('✅ API客户端配置完成:', {
+        baseURL: this.config.baseURL,
+        environment: this.config.environment
+      })
+    } catch (error) {
+      console.error('❌ API配置初始化失败:', error)
+    }
+  }
+
+  /**
+   * 获取当前API配置信息
+   */
+  getApiInfo() {
+    return {
+      config: this.config,
+      currentBaseURL: this.client.defaults.baseURL,
+      isConfigured: this.config !== null
+    }
+  }
+
+  /**
+   * 手动重新配置API
+   */
+  async reconfigure(newBaseUrl?: string) {
+    try {
+      const { apiConfigManager } = await import('@/utils/apiConfig')
+      this.config = await apiConfigManager.reconfigure(newBaseUrl)
+      this.client.defaults.baseURL = this.config.baseURL
+      console.log('✅ API重新配置成功:', this.config.baseURL)
+    } catch (error) {
+      console.error('❌ API重新配置失败:', error)
+      throw error
+    }
   }
 
   private setupInterceptors() {
