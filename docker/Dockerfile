@@ -1,7 +1,24 @@
-# Quick FShare 单一容器部署
+# Quick FShare 单一容器部署 - 多阶段构建优化
 # 将前端、后端、数据库打包为单一容器
 
-# 使用包含Node.js的基础镜像
+# ======== 阶段1: 前端构建 ========
+FROM node:18-alpine AS frontend-builder
+
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm install
+
+COPY frontend/ ./
+RUN npm run build
+
+# ======== 阶段2: 后端依赖安装 ========
+FROM node:18-alpine AS backend-builder
+
+WORKDIR /app/backend
+COPY backend/package*.json ./
+RUN npm install --only=production && npm cache clean --force
+
+# ======== 阶段3: 最终运行镜像 ========
 FROM node:18-alpine
 
 # 安装必要的系统工具
@@ -10,24 +27,18 @@ RUN apk add --no-cache \
     sqlite \
     curl \
     supervisor \
-    dumb-init
+    dumb-init && \
+    rm -rf /var/cache/apk/*
 
 # 设置工作目录
 WORKDIR /app
 
-# ======== 构建前端 ========
-COPY frontend/package*.json ./frontend/
-RUN cd frontend && npm install --verbose
-
-COPY frontend/ ./frontend/
-RUN cd frontend && npm run build
-
-# ======== 安装后端依赖 ========
-COPY backend/package*.json ./backend/
-RUN cd backend && npm install --only=production --verbose
-
+# ======== 复制后端代码和依赖 ========
 COPY backend/ ./backend/
-RUN cd backend && npm run build && npm run verify
+COPY --from=backend-builder /app/backend/node_modules ./backend/node_modules
+
+# ======== 复制前端构建结果 ========
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
 # ======== 复制数据库相关文件 ========
 COPY database/ ./database/
@@ -58,22 +69,21 @@ RUN echo 'user nginx;' > /etc/nginx/nginx.conf && \
 
 # nginx用户已由nginx包自动创建
 
-# ======== 设置应用目录结构 ========
+# ======== 一次性设置所有配置和目录 ========
 RUN mkdir -p \
     /app/logs \
     /app/database \
     /app/uploads \
     /app/thumbnails \
-    /usr/share/nginx/html
-
-# 复制构建好的前端文件到Nginx目录
-RUN cp -r /app/frontend/dist/* /usr/share/nginx/html/
-
-# ======== 创建Supervisor配置 ========
-RUN printf '[supervisord]\nnodaemon=true\nuser=root\nlogfile=/var/log/supervisord.log\npidfile=/var/run/supervisord.pid\n\n[program:backend]\ncommand=node server.js\ndirectory=/app/backend\nuser=nobody\nautostart=true\nautorestart=true\nstderr_logfile=/var/log/backend-error.log\nstdout_logfile=/var/log/backend.log\nenvironment=NODE_ENV=production,PORT=3001,DB_PATH=/app/database/fshare.db,UPLOAD_PATH=/app/uploads,THUMBNAIL_PATH=/app/thumbnails,LOG_LEVEL=info\n\n[program:nginx]\ncommand=nginx -g "daemon off;"\nuser=root\nautostart=true\nautorestart=true\nstderr_logfile=/var/log/nginx-error.log\nstdout_logfile=/var/log/nginx.log\n\n[supervisorctl]\nserverurl=unix:///tmp/supervisor.sock\n\n[unix_http_server]\nfile=/tmp/supervisor.sock\n' > /etc/supervisord.conf
-
-# ======== 创建启动脚本 ========
-RUN printf '#!/bin/sh\n\necho "🚀 启动 Quick FShare 单一容器..."\n\n# 初始化数据库\necho "📊 初始化数据库..."\ncd /app/backend && node scripts/init-db.js\n\n# 设置权限\necho "🔐 设置文件权限..."\nchown -R nobody:nobody /app/logs /app/database /app/uploads /app/thumbnails\nchmod -R 755 /app/logs /app/database /app/uploads /app/thumbnails\n\necho "✅ 初始化完成，启动服务..."\n\n# 使用supervisor管理多个进程\nexec supervisord -c /etc/supervisord.conf\n' > /app/start.sh
+    /usr/share/nginx/html && \
+    # 复制前端文件到nginx目录并清理源文件
+    cp -r /app/frontend/dist/* /usr/share/nginx/html/ && \
+    rm -rf /app/frontend && \
+    # 创建Supervisor配置
+    printf '[supervisord]\nnodaemon=true\nuser=root\nlogfile=/var/log/supervisord.log\npidfile=/var/run/supervisord.pid\n\n[program:backend]\ncommand=node server.js\ndirectory=/app/backend\nuser=nobody\nautostart=true\nautorestart=true\nstderr_logfile=/var/log/backend-error.log\nstdout_logfile=/var/log/backend.log\nenvironment=NODE_ENV=production,PORT=3001,DB_PATH=/app/database/fshare.db,UPLOAD_PATH=/app/uploads,THUMBNAIL_PATH=/app/thumbnails,LOG_LEVEL=info\n\n[program:nginx]\ncommand=nginx -g "daemon off;"\nuser=root\nautostart=true\nautorestart=true\nstderr_logfile=/var/log/nginx-error.log\nstdout_logfile=/var/log/nginx.log\n\n[supervisorctl]\nserverurl=unix:///tmp/supervisor.sock\n\n[unix_http_server]\nfile=/tmp/supervisor.sock\n' > /etc/supervisord.conf && \
+    # 创建启动脚本
+    printf '#!/bin/sh\n\necho "🚀 启动 Quick FShare 单一容器..."\n\n# 初始化数据库\necho "📊 初始化数据库..."\ncd /app/backend && node scripts/init-db.js\n\n# 设置权限\necho "🔐 设置文件权限..."\nchown -R nobody:nobody /app/logs /app/database /app/uploads /app/thumbnails\nchmod -R 755 /app/logs /app/database /app/uploads /app/thumbnails\n\necho "✅ 初始化完成，启动服务..."\n\n# 使用supervisor管理多个进程\nexec supervisord -c /etc/supervisord.conf\n' > /app/start.sh && \
+    chmod +x /app/start.sh
 
 # ======== 设置环境变量 ========
 ENV NODE_ENV=production \
@@ -97,9 +107,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 # ======== 数据卷 ========
 VOLUME ["/app/database", "/app/uploads", "/app/thumbnails", "/app/logs"]
-
-# ======== 启动容器 ========
-RUN chmod +x /app/start.sh
 
 # 使用dumb-init处理信号
 ENTRYPOINT ["dumb-init", "--"]
