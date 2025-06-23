@@ -17,14 +17,14 @@ WORKDIR /app
 
 # ======== 构建前端 ========
 COPY frontend/package*.json ./frontend/
-RUN cd frontend && npm ci --verbose
+RUN cd frontend && npm install --verbose
 
 COPY frontend/ ./frontend/
 RUN cd frontend && npm run build
 
 # ======== 安装后端依赖 ========
 COPY backend/package*.json ./backend/
-RUN cd backend && npm ci --only=production --verbose
+RUN cd backend && npm install --only=production --verbose
 
 COPY backend/ ./backend/
 RUN cd backend && npm run build && npm run verify
