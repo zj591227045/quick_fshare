@@ -276,8 +276,12 @@ class BrowseController {
             })
           }
 
+          // 修复：将share.path与filePath合并，用于SMB远程路径
+          // filePath现在是相对路径，需要与share.path合并
+          const smbFilePath = path.posix.join(share.path || '/', filePath)
+
           // 获取SMB文件信息
-          fileInfo = await this.fileSystemService.getSMBFileInfo(share.smbConfig, filePath)
+          fileInfo = await this.fileSystemService.getSMBFileInfo(share.smbConfig, smbFilePath)
           if (fileInfo.type !== 'file') {
             return res.status(400).json({
               success: false,
@@ -287,7 +291,7 @@ class BrowseController {
 
           // 只有非HEAD请求才创建SMB读取流
           if (!isHeadRequest) {
-            stream = await this.fileSystemService.createSMBReadStream(share.smbConfig, filePath)
+            stream = await this.fileSystemService.createSMBReadStream(share.smbConfig, smbFilePath)
           }
           break
 
@@ -545,7 +549,7 @@ class BrowseController {
       }
 
       // 检查密码保护，但如果是管理员则跳过
-      if (share.accessType === 'password' && !req.isAdmin) {
+      if (share.accessType === 'password' && !req.user) {
         const token = req.query.token || req.headers['x-access-token']
         if (!token || !verifyTemporaryToken(token, share.id)) {
           return res.status(401).json({
@@ -796,7 +800,7 @@ class BrowseController {
       const { getSearchIndexService } = require('../services/SearchIndexService')
       const searchService = getSearchIndexService()
       
-      const stats = searchService.getIncrementalUpdateStats(shareId)
+      const stats = await searchService.getIncrementalUpdateStats(shareId)
       
       if (!stats) {
         return res.status(404).json({
@@ -1006,6 +1010,114 @@ class BrowseController {
       })
     } catch (error) {
       logger.error('记录下载记录失败', { error: error.message })
+    }
+  }
+
+  /**
+   * 获取分享的增量更新配置
+   */
+  async getShareConfig(req, res) {
+    try {
+      const { shareId } = req.params
+      
+      const config = await this.searchIndexService.getShareConfig(shareId)
+      
+      res.json({
+        success: true,
+        data: config
+      })
+    } catch (error) {
+      logger.error('获取分享配置失败', { error: error.message })
+      res.status(500).json({
+        success: false,
+        message: '获取分享配置失败',
+        error: error.message
+      })
+    }
+  }
+
+  /**
+   * 设置分享的增量更新配置
+   */
+  async setShareConfig(req, res) {
+    try {
+      const { shareId } = req.params
+      const { 
+        incrementalUpdateEnabled,
+        incrementalCheckInterval,
+        fullRebuildThreshold 
+      } = req.body
+      
+      // 验证参数
+      const config = {}
+      
+      if (incrementalUpdateEnabled !== undefined) {
+        config.incrementalUpdateEnabled = Boolean(incrementalUpdateEnabled)
+      }
+      
+      if (incrementalCheckInterval !== undefined) {
+        const interval = parseInt(incrementalCheckInterval)
+        if (interval < 60000) { // 最小1分钟
+          return res.status(400).json({
+            success: false,
+            message: '检查间隔不能少于1分钟'
+          })
+        }
+        if (interval > 24 * 60 * 60 * 1000) { // 最大24小时
+          return res.status(400).json({
+            success: false,
+            message: '检查间隔不能超过24小时'
+          })
+        }
+        config.incrementalCheckInterval = interval
+      }
+      
+      if (fullRebuildThreshold !== undefined) {
+        const threshold = parseFloat(fullRebuildThreshold)
+        if (threshold < 0.1 || threshold > 1.0) {
+          return res.status(400).json({
+            success: false,
+            message: '重建阈值必须在0.1到1.0之间'
+          })
+        }
+        config.fullRebuildThreshold = threshold
+      }
+      
+      const result = await this.searchIndexService.setShareConfig(shareId, config)
+      
+      res.json({
+        success: true,
+        data: result,
+        message: '分享配置已更新'
+      })
+    } catch (error) {
+      logger.error('设置分享配置失败', { error: error.message })
+      res.status(500).json({
+        success: false,
+        message: '设置分享配置失败',
+        error: error.message
+      })
+    }
+  }
+
+  /**
+   * 获取所有分享的配置
+   */
+  async getAllShareConfigs(req, res) {
+    try {
+      const configs = this.searchIndexService.getAllShareConfigs()
+      
+      res.json({
+        success: true,
+        data: configs
+      })
+    } catch (error) {
+      logger.error('获取所有分享配置失败', { error: error.message })
+      res.status(500).json({
+        success: false,
+        message: '获取所有分享配置失败',
+        error: error.message
+      })
     }
   }
 }

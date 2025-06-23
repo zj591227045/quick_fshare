@@ -149,9 +149,26 @@ class FileSystemService {
           const isDirectory = !hasExtension && !startsWithDot
           const isFile = !isDirectory
 
+          // 计算相对路径：如果有basePath，则返回相对于basePath的路径
+          let relativePath
+          if (options.basePath) {
+            // 对于SMB分享，返回相对于basePath的路径
+            const fullPath = `/${itemPath}`
+            if (fullPath.startsWith(options.basePath)) {
+              relativePath = fullPath.substring(options.basePath.length) || '/'
+              if (!relativePath.startsWith('/')) {
+                relativePath = '/' + relativePath
+              }
+            } else {
+              relativePath = fullPath
+            }
+          } else {
+            relativePath = `/${itemPath}`
+          }
+
           fileInfos.push({
             name: item,
-            path: `/${itemPath}`,
+            path: relativePath,
             type: isDirectory ? 'directory' : 'file',
             size: 0, // 跳过大小信息以提高速度
             modified: new Date().toISOString(), // 使用当前时间
@@ -181,12 +198,36 @@ class FileSystemService {
         this.sortFiles(fileInfos, sort, order)
       }
 
-      // 获取父级目录路径
-      const parentPath = remotePath === '/' ? null : path.dirname(remotePath)
+      // 计算相对路径用于返回值
+      let currentRelativePath, parentRelativePath
+      if (options.basePath) {
+        // 对于SMB分享，返回相对于basePath的路径
+        if (remotePath.startsWith(options.basePath)) {
+          currentRelativePath = remotePath.substring(options.basePath.length) || '/'
+          if (!currentRelativePath.startsWith('/')) {
+            currentRelativePath = '/' + currentRelativePath
+          }
+        } else {
+          currentRelativePath = remotePath
+        }
+        
+        // 计算父路径
+        if (currentRelativePath === '/') {
+          parentRelativePath = null
+        } else {
+          parentRelativePath = path.dirname(currentRelativePath)
+          if (parentRelativePath === '.') {
+            parentRelativePath = '/'
+          }
+        }
+      } else {
+        currentRelativePath = remotePath
+        parentRelativePath = remotePath === '/' ? null : path.dirname(remotePath)
+      }
 
       const result = {
-        current_path: remotePath,
-        parent_path: parentPath,
+        current_path: currentRelativePath,
+        parent_path: parentRelativePath,
         files: fileInfos,
         total,
         pagination: {
@@ -406,7 +447,11 @@ class FileSystemService {
         if (!share.smbConfig) {
           throw new Error('SMB配置不存在')
         }
-        return this.browseSMBDirectory(share.smbConfig, requestPath, options)
+        // 对于SMB分享，requestPath应该相对于share.path
+        // 如果requestPath是'/'，则访问share.path
+        // 如果requestPath是'/子目录'，则访问share.path + '/子目录'
+        const smbRemotePath = requestPath === '/' ? (share.path || '/') : path.posix.join(share.path || '/', requestPath)
+        return this.browseSMBDirectory(share.smbConfig, smbRemotePath, { ...options, basePath: share.path })
       
       case 'nfs':
         if (!share.nfsConfig) {

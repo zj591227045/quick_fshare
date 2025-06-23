@@ -372,6 +372,28 @@ class ApiClient {
         url: `/browse/${shareId}/incremental-stats`,
       }),
 
+    // 获取分享配置
+    getShareConfig: (shareId: string | number): Promise<ApiResponse<any>> =>
+      this.request({
+        method: 'GET',
+        url: `/browse/${shareId}/config`,
+      }),
+
+    // 设置分享配置
+    setShareConfig: (shareId: string | number, config: any): Promise<ApiResponse<any>> =>
+      this.request({
+        method: 'PUT',
+        url: `/browse/${shareId}/config`,
+        data: config,
+      }),
+
+    // 获取所有分享配置
+    getAllShareConfigs: (): Promise<ApiResponse<any>> =>
+      this.request({
+        method: 'GET',
+        url: '/browse/admin/all-configs',
+      }),
+
     getIndexManagement: (): Promise<ApiResponse<any>> =>
       this.request({
         method: 'GET',

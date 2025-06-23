@@ -1,6 +1,6 @@
 const express = require('express');
 const BrowseController = require('../controllers/browseController');
-const { browseRateLimit } = require('../middleware/rateLimit');
+const { browseRateLimit, indexStatusRateLimit } = require('../middleware/rateLimit');
 const { validateRequest, validate, schemas } = require('../utils/validator');
 const { authenticateAdmin } = require('../middleware/auth');
 
@@ -25,7 +25,7 @@ router.get('/admin/incremental-config',
 
 // 索引管理 - 需要管理员权限
 router.get('/admin/index-management',
-  browseRateLimit,
+  indexStatusRateLimit,
   authenticateAdmin,
   browseController.getIndexManagement.bind(browseController)
 );
@@ -46,7 +46,7 @@ router.post('/admin/cleanup-indexes',
 
 // 管理员获取搜索索引状态 - 需要管理员权限
 router.get('/admin/:shareId/search-status',
-  browseRateLimit,
+  indexStatusRateLimit,
   authenticateAdmin,
   browseController.getSearchIndexStatus.bind(browseController)
 );
@@ -76,9 +76,30 @@ router.post('/:shareId/incremental-update',
 
 // 获取增量更新统计 - 需要管理员权限
 router.get('/:shareId/incremental-stats',
-  browseRateLimit,
+  indexStatusRateLimit,
   authenticateAdmin,
   browseController.getIncrementalUpdateStats.bind(browseController)
+);
+
+// 获取分享配置 - 需要管理员权限
+router.get('/:shareId/config',
+  indexStatusRateLimit,
+  authenticateAdmin,
+  browseController.getShareConfig.bind(browseController)
+);
+
+// 设置分享配置 - 需要管理员权限
+router.put('/:shareId/config',
+  browseRateLimit,
+  authenticateAdmin,
+  browseController.setShareConfig.bind(browseController)
+);
+
+// 获取所有分享配置 - 需要管理员权限
+router.get('/admin/all-configs',
+  indexStatusRateLimit,
+  authenticateAdmin,
+  browseController.getAllShareConfigs.bind(browseController)
 );
 
 // 搜索文件
@@ -90,7 +111,7 @@ router.get('/:shareId/search',
 
 // 获取搜索索引状态
 router.get('/:shareId/search-status',
-  browseRateLimit,
+  indexStatusRateLimit,
   browseController.getSearchIndexStatus.bind(browseController)
 );
 

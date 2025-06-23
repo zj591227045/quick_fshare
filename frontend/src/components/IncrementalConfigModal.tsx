@@ -8,8 +8,7 @@ import {
   Space, 
   Alert, 
   App,
-  Divider,
-  Spin
+  Divider
 } from 'antd';
 import { 
   SettingOutlined,
@@ -118,7 +117,7 @@ const IncrementalConfigModal: React.FC<IncrementalConfigModalProps> = ({
     >
       {loading && (
         <div style={{ textAlign: 'center', padding: '20px' }}>
-          <Spin size="large" />
+          <div style={{ textAlign: 'center', padding: '20px' }}>加载中...</div>
           <div style={{ marginTop: 16 }}>加载配置中...</div>
         </div>
       )}

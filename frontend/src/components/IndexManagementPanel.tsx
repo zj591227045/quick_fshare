@@ -86,14 +86,14 @@ const IndexManagementPanel: React.FC<IndexManagementPanelProps> = ({
       const response = await browseApi.rebuildIndex(shareId);
       if (response.success) {
         message.success('索引重建已开始');
-        // 开始轮询状态
+        // 开始轮询状态，使用更长的间隔减少频率限制触发
         const pollStatus = setInterval(async () => {
           await loadAllData();
           if (indexStatus?.status === 'completed' || indexStatus?.status === 'failed') {
             clearInterval(pollStatus);
             setRebuilding(false);
           }
-        }, 2000);
+        }, 5000); // 改为5秒间隔，减少请求频率
       } else {
         message.error(response.message || '重建索引失败');
         setRebuilding(false);

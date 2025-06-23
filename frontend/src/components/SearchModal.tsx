@@ -154,7 +154,7 @@ const SearchModal: React.FC<SearchModalProps> = ({
       const response = await browseApi.rebuildIndex(shareId);
       if (response.success) {
         message.success('索引重建已开始');
-        // 定期检查状态
+        // 定期检查状态，使用更长的间隔减少频率限制触发
         const checkStatus = setInterval(async () => {
           await loadIndexStatus();
           const currentStatus = indexStatus?.status;
@@ -162,7 +162,7 @@ const SearchModal: React.FC<SearchModalProps> = ({
             clearInterval(checkStatus);
             setRebuildingIndex(false);
           }
-        }, 2000);
+        }, 5000); // 改为5秒间隔，减少请求频率
       } else {
         message.error(response.message || '重建索引失败');
         setRebuildingIndex(false);

@@ -36,18 +36,20 @@ class SearchIndexService extends EventEmitter {
       enablePersistence: true, // 启用磁盘持久化
       enableIncrementalUpdate: true, // 启用增量更新
       maxCacheAge: 5 * 60 * 1000, // 5分钟缓存过期
-      incrementalCheckInterval: 2 * 60 * 1000, // 2分钟增量检查间隔
+      incrementalCheckInterval: 10 * 60 * 1000, // 改为10分钟增量检查间隔，减少频率
       batchSize: 50, // 文件处理批大小
       maxIndexSize: 1000000, // 最大索引文件数量（100万）
       autoCleanup: true, // 自动清理过期索引
       cleanupInterval: 30 * 60 * 1000, // 30分钟清理间隔
-      fullRebuildThreshold: 0.3, // 变更超过30%时执行全量重建
+      fullRebuildThreshold: 0.8, // 改为80%阈值，只有重大变更才全量重建
       hashAlgorithm: 'md5' // 文件hash算法
     }
     
     // 初始化FileSystemService
     this.fileSystemService = null
     this.incrementalTimers = new Map() // 增量更新定时器
+    this.incrementalRunning = new Set() // 记录正在运行的增量更新，防止重复执行
+    this.shareConfigs = new Map() // 每个共享的独立配置
   }
 
   /**
@@ -63,13 +65,17 @@ class SearchIndexService extends EventEmitter {
     // 加载持久化的索引
     await this.loadPersistedIndexes()
     
+    // 主动检查和加载所有有效的分享索引
+    await this.autoLoadValidIndexes()
+    
     // 启动定期更新
     this.startPeriodicUpdate()
     
     // 启动增量更新检查
-    this.startIncrementalUpdateChecks()
+    await this.startIncrementalUpdateChecks()
     
     logger.info('搜索索引服务初始化完成', {
+      loadedIndexes: this.indexes.size,
       incrementalUpdate: this.config.enableIncrementalUpdate,
       checkInterval: this.config.incrementalCheckInterval
     })
@@ -78,12 +84,12 @@ class SearchIndexService extends EventEmitter {
   /**
    * 启动增量更新检查
    */
-  startIncrementalUpdateChecks() {
+  async startIncrementalUpdateChecks() {
     if (!this.config.enableIncrementalUpdate) return
 
     // 为每个已有索引启动增量检查
     for (const shareId of this.indexes.keys()) {
-      this.startIncrementalUpdateForShare(shareId)
+      await this.startIncrementalUpdateForShare(shareId)
     }
 
     logger.info('增量更新检查服务已启动')
@@ -92,9 +98,17 @@ class SearchIndexService extends EventEmitter {
   /**
    * 为特定分享启动增量更新
    */
-  startIncrementalUpdateForShare(shareId) {
+  async startIncrementalUpdateForShare(shareId) {
     if (this.incrementalTimers.has(shareId)) {
       clearInterval(this.incrementalTimers.get(shareId))
+    }
+
+    // 获取该分享的配置，如果没有则使用默认配置
+    const shareConfig = await this.getShareConfig(shareId)
+    
+    if (!shareConfig.incrementalUpdateEnabled) {
+      logger.info('分享的增量更新已禁用', { shareId })
+      return
     }
 
     const timer = setInterval(async () => {
@@ -103,10 +117,10 @@ class SearchIndexService extends EventEmitter {
       } catch (error) {
         logger.error('增量更新失败', { shareId, error: error.message })
       }
-    }, this.config.incrementalCheckInterval)
+    }, shareConfig.incrementalCheckInterval)
 
     this.incrementalTimers.set(shareId, timer)
-    logger.info('为分享启动增量更新', { shareId })
+    logger.info('为分享启动增量更新', { shareId, interval: shareConfig.incrementalCheckInterval })
   }
 
   /**
@@ -124,8 +138,18 @@ class SearchIndexService extends EventEmitter {
    * 执行增量更新
    */
   async performIncrementalUpdate(shareId) {
+    // 确保shareId为数字类型，防止类型不一致导致的索引混乱
+    const normalizedShareId = parseInt(shareId)
+    
+    // 防止重复执行增量更新
+    if (this.incrementalRunning.has(normalizedShareId)) {
+      logger.debug('增量更新已在运行中，跳过', { shareId: normalizedShareId })
+      return
+    }
+    
+    this.incrementalRunning.add(normalizedShareId)
     const startTime = Date.now()
-    logger.info('开始增量更新检查', { shareId })
+    logger.info('开始增量更新检查', { shareId: normalizedShareId })
 
     try {
       // 检查索引是否存在
@@ -177,12 +201,15 @@ class SearchIndexService extends EventEmitter {
       })
 
     } catch (error) {
-      logger.error('增量更新失败', { shareId, error: error.message })
+      logger.error('增量更新失败', { shareId: normalizedShareId, error: error.message })
+    } finally {
+      // 确保清理运行状态
+      this.incrementalRunning.delete(normalizedShareId)
     }
   }
 
   /**
-   * 检测文件变更
+   * 检测文件变更（优化版：使用目录时间戳快速检测）
    */
   async detectChanges(shareId, share) {
     const changes = {
@@ -198,9 +225,16 @@ class SearchIndexService extends EventEmitter {
       const currentHashes = this.fileHashes.get(shareId) || new Map()
       const currentFiles = new Map(currentIndex.map(item => [item.path, item]))
 
-      // 扫描文件系统获取最新状态
+      // 首先快速检查根目录是否有变更
+      const rootChanged = await this.checkDirectoryChanged(share, '', shareId)
+      if (!rootChanged) {
+        logger.debug('根目录未发生变更，跳过扫描', { shareId })
+        return changes
+      }
+
+      // 只扫描有变更的目录和文件
       const latestFiles = new Map()
-      await this.scanForChanges(share, '', latestFiles, shareId)
+      await this.scanChangedDirectories(share, '', latestFiles, shareId, currentFiles)
 
       // 检测新增和修改的文件
       for (const [filePath, fileInfo] of latestFiles.entries()) {
@@ -223,14 +257,29 @@ class SearchIndexService extends EventEmitter {
         }
       }
 
-      // 检测删除的文件
+      // 检测删除的文件（只检查扫描过的目录中的文件）
+      const scannedDirectories = new Set()
+      for (const [filePath] of latestFiles.entries()) {
+        const dir = path.dirname(filePath)
+        scannedDirectories.add(dir)
+      }
+
       for (const [filePath, fileInfo] of currentFiles.entries()) {
-        if (!latestFiles.has(filePath)) {
+        const dir = path.dirname(filePath)
+        if (scannedDirectories.has(dir) && !latestFiles.has(filePath)) {
           changes.deleted.push(fileInfo)
         }
       }
 
       changes.totalChanges = changes.added.length + changes.modified.length + changes.deleted.length
+
+      logger.info('增量变更检测完成', {
+        shareId,
+        added: changes.added.length,
+        modified: changes.modified.length,
+        deleted: changes.deleted.length,
+        scannedPaths: latestFiles.size
+      })
 
       return changes
     } catch (error) {
@@ -315,10 +364,20 @@ class SearchIndexService extends EventEmitter {
         throw new Error('SMB配置不存在')
       }
 
+      // 修复：处理SMB路径拼接逻辑
+      let smbRemotePath
+      if (depth === 0) {
+        // 根目录层级，使用share.path
+        smbRemotePath = share.path || '/'
+      } else {
+        // 子目录层级，relativePath已经是完整路径，直接使用
+        smbRemotePath = relativePath
+      }
+      
       // 获取目录的最新状态
       const result = await this.fileSystemService.browseSMBDirectory(
         smbConfig,
-        relativePath || '/',
+        smbRemotePath,
         { limit: 50000, offset: 0 } // 增量检查时减少单次获取数量
       )
 
@@ -444,7 +503,7 @@ class SearchIndexService extends EventEmitter {
           deleted: deletedCount
         },
         buildDuration: Date.now() - startTime,
-        shareId,
+        shareId: parseInt(shareId), // 确保shareId为数字类型
         indexVersion: '1.1'
       }
 
@@ -588,7 +647,8 @@ class SearchIndexService extends EventEmitter {
    * 获取hash文件路径
    */
   getIndexHashPath(shareId) {
-    return path.join(INDEX_DIR, `share_${shareId}_hashes.json`)
+    const normalizedShareId = parseInt(shareId) // 确保shareId为数字类型
+    return path.join(INDEX_DIR, `share_${normalizedShareId}_hashes.json`)
   }
 
   /**
@@ -751,14 +811,16 @@ class SearchIndexService extends EventEmitter {
    * 获取索引文件路径
    */
   getIndexFilePath(shareId) {
-    return path.join(INDEX_DIR, `share_${shareId}.json`)
+    const normalizedShareId = parseInt(shareId) // 确保shareId为数字类型
+    return path.join(INDEX_DIR, `share_${normalizedShareId}.json`)
   }
 
   /**
    * 获取索引元数据文件路径
    */
   getIndexMetaPath(shareId) {
-    return path.join(INDEX_DIR, `share_${shareId}_meta.json`)
+    const normalizedShareId = parseInt(shareId) // 确保shareId为数字类型
+    return path.join(INDEX_DIR, `share_${normalizedShareId}_meta.json`)
   }
 
   /**
@@ -847,10 +909,11 @@ class SearchIndexService extends EventEmitter {
         hashes = this.rebuildHashesFromIndex(index)
       }
 
-      // 检查索引是否过期
+      // 检查索引是否严重过期（只有超过24小时才认为过期，而不是5分钟）
       const age = Date.now() - metadata.lastUpdated
-      if (age > this.config.maxCacheAge) {
-        logger.info('磁盘索引已过期，将重建', { shareId, age })
+      const maxDiskAge = 24 * 60 * 60 * 1000 // 24小时
+      if (age > maxDiskAge) {
+        logger.info('磁盘索引已严重过期，将重建', { shareId, age: Math.round(age / 1000 / 60) + '分钟' })
         return null
       }
 
@@ -923,6 +986,54 @@ class SearchIndexService extends EventEmitter {
   }
 
   /**
+   * 主动检查和加载所有有效分享的索引
+   */
+  async autoLoadValidIndexes() {
+    try {
+      const Share = require('../models/Share')
+      const sharesResult = await Share.findAll()
+      const shares = sharesResult.shares
+
+      let autoLoadedCount = 0
+
+      for (const share of shares) {
+        if (!share.enabled) continue
+
+        // 如果内存中没有这个分享的索引，尝试从磁盘加载
+        if (!this.indexes.has(share.id)) {
+          const result = await this.loadIndexFromDisk(share.id)
+          if (result) {
+            this.indexes.set(share.id, result.index)
+            this.indexStatus.set(share.id, result.metadata)
+            this.fileHashes.set(share.id, result.hashes || new Map())
+            
+            // 启动增量更新
+            if (this.config.enableIncrementalUpdate) {
+              this.startIncrementalUpdateForShare(share.id)
+            }
+            
+            autoLoadedCount++
+            logger.info('自动加载分享索引', { 
+              shareId: share.id, 
+              shareName: share.name,
+              fileCount: result.index.length 
+            })
+          }
+        }
+      }
+
+      logger.info('自动索引加载检查完成', { 
+        totalShares: shares.length,
+        autoLoadedCount,
+        totalLoadedIndexes: this.indexes.size 
+      })
+
+    } catch (error) {
+      logger.error('自动加载索引失败', { error: error.message })
+    }
+  }
+
+  /**
    * 删除磁盘上的索引文件
    */
   async deleteIndexFromDisk(shareId) {
@@ -947,38 +1058,63 @@ class SearchIndexService extends EventEmitter {
    * 获取分享的搜索索引
    */
   async getSearchIndex(shareId) {
+    // 确保shareId为数字类型，防止类型不一致导致的索引混乱
+    const normalizedShareId = parseInt(shareId)
+    
     // 确保服务已初始化
     if (!this.fileSystemService) {
-      logger.warn('FileSystemService未初始化，正在初始化...', { shareId })
+      logger.warn('FileSystemService未初始化，正在初始化...', { shareId: normalizedShareId })
       const FileSystemService = require('./FileSystemService')
       this.fileSystemService = new FileSystemService()
     }
     
-    if (!this.indexes.has(shareId)) {
-      await this.buildSearchIndex(shareId)
+    // 如果内存中没有索引，尝试从磁盘加载
+    if (!this.indexes.has(normalizedShareId)) {
+      const diskResult = await this.loadIndexFromDisk(normalizedShareId)
+      if (diskResult) {
+        this.indexes.set(normalizedShareId, diskResult.index)
+        this.indexStatus.set(normalizedShareId, diskResult.metadata)
+        this.fileHashes.set(normalizedShareId, diskResult.hashes || new Map())
+        
+        // 启动增量更新
+        if (this.config.enableIncrementalUpdate) {
+          this.startIncrementalUpdateForShare(normalizedShareId)
+        }
+        
+        logger.info('从磁盘加载索引到内存用于搜索', { 
+          shareId: normalizedShareId, 
+          fileCount: diskResult.index.length 
+        })
+      } else {
+        // 磁盘上也没有，构建新索引
+        await this.buildSearchIndex(normalizedShareId)
+      }
     }
     
-    const status = this.indexStatus.get(shareId)
+    const status = this.indexStatus.get(normalizedShareId)
     if (status && Date.now() - status.lastUpdated > this.config.maxCacheAge) {
       // 异步重建索引，不阻塞当前搜索
-      this.buildSearchIndex(shareId).catch(error => {
-        logger.error('异步重建索引失败', { shareId, error: error.message })
+      this.buildSearchIndex(normalizedShareId).catch(error => {
+        logger.error('异步重建索引失败', { shareId: normalizedShareId, error: error.message })
       })
     }
     
-    return this.indexes.get(shareId) || []
+    return this.indexes.get(normalizedShareId) || []
   }
 
   /**
    * 构建搜索索引（内存优先）
    */
   async buildSearchIndex(shareId) {
+    // 确保shareId为数字类型，防止类型不一致导致的索引混乱
+    const normalizedShareId = parseInt(shareId)
+    
     const startTime = Date.now()
-    logger.info('开始构建搜索索引', { shareId })
+    logger.info('开始构建搜索索引', { shareId: normalizedShareId })
     
     try {
       // 设置构建状态
-      this.indexStatus.set(shareId, {
+      this.indexStatus.set(normalizedShareId, {
         status: 'building',
         lastUpdated: Date.now(),
         progress: 0,
@@ -987,7 +1123,7 @@ class SearchIndexService extends EventEmitter {
 
       // 获取分享配置
       const Share = require('../models/Share')
-      const share = await Share.findById(shareId)
+      const share = await Share.findById(normalizedShareId)
       if (!share || !share.enabled) {
         throw new Error('分享不存在或已禁用')
       }
@@ -1000,14 +1136,14 @@ class SearchIndexService extends EventEmitter {
       // 根据分享类型构建索引（全部在内存中进行）
       switch (share.type) {
         case 'local':
-          await this.buildLocalIndex(share.path, '', index, shareId, 0, fileHashes)
+          await this.buildLocalIndex(share.path, '', index, normalizedShareId, 0, fileHashes)
           break
         case 'smb':
-          await this.buildSMBIndex(share, '', index, shareId, 0, fileHashes)
+          await this.buildSMBIndex(share, '', index, normalizedShareId, 0, fileHashes)
           break
         case 'nfs':
           // TODO: 实现NFS索引构建
-          logger.warn('NFS索引构建暂未实现', { shareId })
+          logger.warn('NFS索引构建暂未实现', { shareId: normalizedShareId })
           break
         default:
           throw new Error(`不支持的分享类型: ${share.type}`)
@@ -1022,37 +1158,37 @@ class SearchIndexService extends EventEmitter {
         progress: 100,
         totalFiles,
         buildDuration: Date.now() - startTime,
-        shareId,
+        shareId: normalizedShareId, // 确保shareId为数字类型
         indexVersion: '1.0'
       }
 
       // 先保存到磁盘，确保数据安全
-      await this.saveIndexToDiskSync(shareId, index, metadata, fileHashes)
+      await this.saveIndexToDiskSync(normalizedShareId, index, metadata, fileHashes)
 
       // 磁盘保存成功后，立即存储到内存，确保搜索功能可用
-      this.indexes.set(shareId, index)
-      this.indexStatus.set(shareId, metadata)
-      this.fileHashes.set(shareId, fileHashes) // 保存hash映射
+      this.indexes.set(normalizedShareId, index)
+      this.indexStatus.set(normalizedShareId, metadata)
+      this.fileHashes.set(normalizedShareId, fileHashes) // 保存hash映射
 
       logger.info('索引构建并安全保存完成', { 
-        shareId, 
+        shareId: normalizedShareId, 
         totalFiles, 
         duration: Date.now() - startTime 
       })
 
       // 启动该分享的增量更新
       if (this.config.enableIncrementalUpdate) {
-        this.startIncrementalUpdateForShare(shareId)
+        this.startIncrementalUpdateForShare(normalizedShareId)
       }
 
       // 发出索引完成事件
-      this.emit('indexBuilt', { shareId, totalFiles })
+      this.emit('indexBuilt', { shareId: normalizedShareId, totalFiles })
 
       return index
     } catch (error) {
-      logger.error('构建搜索索引失败', { shareId, error: error.message })
+      logger.error('构建搜索索引失败', { shareId: normalizedShareId, error: error.message })
       
-      this.indexStatus.set(shareId, {
+      this.indexStatus.set(normalizedShareId, {
         status: 'failed',
         lastUpdated: Date.now(),
         error: error.message
@@ -1155,10 +1291,27 @@ class SearchIndexService extends EventEmitter {
         throw new Error('SMB配置不存在')
       }
 
+      // 修复：处理SMB路径拼接逻辑
+      let smbRemotePath
+      if (depth === 0) {
+        // 根目录层级，使用share.path
+        smbRemotePath = share.path || '/'
+      } else {
+        // 子目录层级，relativePath已经是完整路径，直接使用
+        smbRemotePath = relativePath
+      }
+      
+      logger.debug('SMB路径处理', { 
+        depth, 
+        relativePath, 
+        sharePath: share.path, 
+        finalPath: smbRemotePath 
+      })
+      
       // 使用FileSystemService浏览SMB目录，一次性获取更多文件
       const result = await this.fileSystemService.browseSMBDirectory(
         smbConfig, 
-        relativePath || '/', 
+        smbRemotePath, 
         { limit: 20000, offset: 0 } // 增大限制，减少网络往返
       )
 
@@ -1409,7 +1562,60 @@ class SearchIndexService extends EventEmitter {
    * 获取索引状态
    */
   getIndexStatus(shareId) {
-    return this.indexStatus.get(shareId) || {
+    // 确保shareId为数字类型，防止类型不一致导致的索引混乱
+    const normalizedShareId = parseInt(shareId)
+    
+    // 首先检查内存中的状态
+    let status = this.indexStatus.get(normalizedShareId)
+    
+    // 如果内存中没有，检查磁盘上是否有有效的索引文件
+    if (!status || status.status === 'not_built') {
+      const indexPath = this.getIndexFilePath(normalizedShareId)
+      const metaPath = this.getIndexMetaPath(normalizedShareId)
+      
+      try {
+        const fs = require('fs')
+        // 同步检查文件是否存在
+        if (fs.existsSync(indexPath) && fs.existsSync(metaPath)) {
+          // 如果磁盘上有索引文件，尝试加载到内存
+          this.loadIndexFromDisk(normalizedShareId).then(result => {
+            if (result) {
+              this.indexes.set(normalizedShareId, result.index)
+              this.indexStatus.set(normalizedShareId, result.metadata)
+              this.fileHashes.set(normalizedShareId, result.hashes || new Map())
+              
+              // 启动增量更新
+              if (this.config.enableIncrementalUpdate) {
+                this.startIncrementalUpdateForShare(normalizedShareId)
+              }
+              
+              logger.info('自动加载磁盘索引到内存', { 
+                shareId: normalizedShareId, 
+                fileCount: result.index.length 
+              })
+            }
+          }).catch(error => {
+            logger.warn('自动加载磁盘索引失败', { shareId: normalizedShareId, error: error.message })
+          })
+          
+          // 临时返回一个基于磁盘文件的状态
+          try {
+            const metaData = fs.readFileSync(metaPath, 'utf8')
+            const metadata = JSON.parse(metaData)
+            return {
+              ...metadata,
+              status: 'completed' // 磁盘上有文件就认为是完成状态
+            }
+          } catch (error) {
+            logger.debug('读取磁盘元数据失败', { shareId: normalizedShareId, error: error.message })
+          }
+        }
+      } catch (error) {
+        logger.debug('检查磁盘索引文件失败', { shareId: normalizedShareId, error: error.message })
+      }
+    }
+    
+    return status || {
       status: 'not_built',
       lastUpdated: null,
       progress: 0,
@@ -1437,43 +1643,124 @@ class SearchIndexService extends EventEmitter {
   }
 
   /**
-   * 手动触发增量更新
+   * 手动触发增量更新（优化版：强制执行真正的增量更新）
    */
   async triggerIncrementalUpdate(shareId) {
     if (!this.config.enableIncrementalUpdate) {
       throw new Error('增量更新功能未启用')
     }
     
-    return this.performIncrementalUpdate(shareId)
+    // 确保shareId为数字类型
+    const normalizedShareId = parseInt(shareId)
+    
+    // 防止重复执行
+    if (this.incrementalRunning.has(normalizedShareId)) {
+      throw new Error('增量更新已在运行中')
+    }
+    
+    this.incrementalRunning.add(normalizedShareId)
+    const startTime = Date.now()
+    
+    try {
+      logger.info('手动触发增量更新', { shareId: normalizedShareId })
+      
+      // 检查索引是否存在
+      if (!this.indexes.has(normalizedShareId)) {
+        logger.info('索引不存在，执行全量构建', { shareId: normalizedShareId })
+        await this.buildSearchIndex(normalizedShareId)
+        return { type: 'full_rebuild', reason: 'no_index' }
+      }
+      
+      // 获取分享配置
+      const Share = require('../models/Share')
+      const share = await Share.findById(normalizedShareId)
+      if (!share || !share.enabled) {
+        throw new Error('分享不存在或已禁用')
+      }
+      
+      // 强制执行快速增量检测（使用优化的算法）
+      const changes = await this.detectChangesOptimized(normalizedShareId, share)
+      
+      if (changes.totalChanges === 0) {
+        logger.info('未检测到变更', { shareId: normalizedShareId })
+        return { 
+          type: 'no_changes', 
+          duration: Date.now() - startTime,
+          message: '未检测到变更' 
+        }
+      }
+      
+      // 对于手动触发，使用更宽松的阈值（避免不必要的全量重建）
+      const currentIndex = this.indexes.get(normalizedShareId)
+      const changeRatio = changes.totalChanges / (currentIndex.length || 1)
+      const manualThreshold = Math.max(this.config.fullRebuildThreshold * 2, 0.9) // 手动时使用更高阈值
+      
+      if (changeRatio > manualThreshold) {
+        logger.info('变更比例超过手动阈值，执行全量重建', { 
+          shareId: normalizedShareId, 
+          changeRatio: Math.round(changeRatio * 100) + '%',
+          threshold: Math.round(manualThreshold * 100) + '%'
+        })
+        await this.buildSearchIndex(normalizedShareId)
+        return { 
+          type: 'full_rebuild', 
+          reason: 'too_many_changes',
+          changeRatio: Math.round(changeRatio * 100) + '%',
+          duration: Date.now() - startTime
+        }
+      }
+      
+      // 执行真正的增量更新
+      await this.applyIncrementalChanges(normalizedShareId, share, changes)
+      
+      const result = {
+        type: 'incremental',
+        duration: Date.now() - startTime,
+        added: changes.added.length,
+        modified: changes.modified.length,
+        deleted: changes.deleted.length,
+        totalChanges: changes.totalChanges
+      }
+      
+      logger.info('手动增量更新完成', { shareId: normalizedShareId, ...result })
+      return result
+      
+    } finally {
+      this.incrementalRunning.delete(normalizedShareId)
+    }
   }
 
   /**
    * 获取增量更新统计信息
    */
-  getIncrementalUpdateStats(shareId) {
-    const status = this.indexStatus.get(shareId) || {
+  async getIncrementalUpdateStats(shareId) {
+    const normalizedShareId = parseInt(shareId)
+    const status = this.indexStatus.get(normalizedShareId) || {
       status: 'not_built',
       lastUpdated: null,
       lastIncrementalUpdate: null,
       changesApplied: null
     }
+    
+    const shareConfig = await this.getShareConfig(normalizedShareId)
 
     return {
-      shareId,
-      isIncrementalEnabled: this.config.enableIncrementalUpdate,
-      hasIncrementalTimer: this.incrementalTimers.has(shareId),
+      shareId: normalizedShareId,
+      isIncrementalEnabled: shareConfig.incrementalUpdateEnabled,
+      hasIncrementalTimer: this.incrementalTimers.has(normalizedShareId),
       lastUpdate: status.lastUpdated,
       lastIncrementalUpdate: status.lastIncrementalUpdate,
       changesApplied: status.changesApplied,
-      checkInterval: this.config.incrementalCheckInterval,
-      fullRebuildThreshold: this.config.fullRebuildThreshold
+      checkInterval: shareConfig.incrementalCheckInterval,
+      fullRebuildThreshold: shareConfig.fullRebuildThreshold,
+      config: shareConfig
     }
   }
 
   /**
    * 配置增量更新参数
    */
-  configureIncrementalUpdate(options = {}) {
+  async configureIncrementalUpdate(options = {}) {
     const {
       enabled = this.config.enableIncrementalUpdate,
       checkInterval = this.config.incrementalCheckInterval,
@@ -1489,7 +1776,7 @@ class SearchIndexService extends EventEmitter {
     // 如果启用状态改变，重新配置定时器
     if (enabled !== oldEnabled) {
       if (enabled) {
-        this.startIncrementalUpdateChecks()
+        await this.startIncrementalUpdateChecks()
       } else {
         // 停止所有增量更新定时器
         for (const shareId of this.incrementalTimers.keys()) {
@@ -1499,7 +1786,7 @@ class SearchIndexService extends EventEmitter {
     } else if (enabled) {
       // 如果间隔时间改变，重启定时器
       for (const shareId of this.indexes.keys()) {
-        this.startIncrementalUpdateForShare(shareId)
+        await this.startIncrementalUpdateForShare(shareId)
       }
     }
 
@@ -1579,6 +1866,530 @@ class SearchIndexService extends EventEmitter {
     } catch (error) {
       logger.error('清理孤立索引文件失败', { error: error.message })
     }
+  }
+
+  /**
+   * 清理所有内存缓存（用于调试和重置）
+   */
+  clearAllMemoryCache() {
+    logger.info('清理所有内存缓存', {
+      indexesCount: this.indexes.size,
+      statusCount: this.indexStatus.size,
+      hashesCount: this.fileHashes.size,
+      timersCount: this.incrementalTimers.size
+    })
+    
+    // 停止所有增量更新定时器
+    for (const shareId of this.incrementalTimers.keys()) {
+      this.stopIncrementalUpdateForShare(shareId)
+    }
+    
+    // 清理所有内存数据
+    this.indexes.clear()
+    this.indexStatus.clear()
+    this.fileHashes.clear()
+    this.directoryTimes.clear()
+    
+    logger.info('内存缓存清理完成')
+  }
+
+  /**
+   * 快速检查目录是否有变更（基于目录时间戳）
+   */
+  async checkDirectoryChanged(share, relativePath, shareId) {
+    try {
+      // 获取上次记录的目录时间戳
+      const lastDirTime = this.directoryTimes.get(`${shareId}:${relativePath}`) || 0
+      
+      let currentDirTime = 0
+      
+      switch (share.type) {
+        case 'local': {
+          const fullPath = path.join(share.path, relativePath)
+          try {
+            const stats = await fs.stat(fullPath)
+            currentDirTime = stats.mtime.getTime()
+          } catch (error) {
+            logger.debug('无法访问本地目录', { path: fullPath, error: error.message })
+            return false
+          }
+          break
+        }
+        case 'smb': {
+          // SMB目录时间戳检查（简化版本，可以根据需要扩展）
+          // 对于SMB，我们使用一个更保守的策略：定期检查
+          const lastCheck = this.directoryTimes.get(`${shareId}:${relativePath}:lastCheck`) || 0
+          const checkInterval = 5 * 60 * 1000 // 5分钟检查间隔
+          
+          if (Date.now() - lastCheck < checkInterval) {
+            logger.debug('SMB目录检查间隔未到，跳过', { shareId, relativePath })
+            return false
+          }
+          
+          this.directoryTimes.set(`${shareId}:${relativePath}:lastCheck`, Date.now())
+          return true // SMB总是假设有变更（可以优化）
+        }
+        default:
+          return true // 未知类型总是检查
+      }
+      
+      // 比较时间戳
+      if (currentDirTime > lastDirTime) {
+        logger.debug('检测到目录变更', { 
+          shareId, 
+          relativePath, 
+          lastTime: new Date(lastDirTime).toISOString(),
+          currentTime: new Date(currentDirTime).toISOString()
+        })
+        this.directoryTimes.set(`${shareId}:${relativePath}`, currentDirTime)
+        return true
+      }
+      
+      return false
+    } catch (error) {
+      logger.debug('检查目录变更失败，假设有变更', { shareId, relativePath, error: error.message })
+      return true // 出错时保守处理，假设有变更
+    }
+  }
+
+  /**
+   * 只扫描有变更的目录（智能增量扫描）
+   */
+  async scanChangedDirectories(share, relativePath, filesMap, shareId, currentFiles, depth = 0) {
+    const maxDepth = 20
+    if (depth > maxDepth) return
+
+    try {
+      // 检查当前目录是否有变更
+      const hasChanges = await this.checkDirectoryChanged(share, relativePath, shareId)
+      if (!hasChanges && depth > 0) {
+        // 如果当前目录没有变更，且不是根目录，跳过扫描
+        logger.debug('目录无变更，跳过扫描', { shareId, relativePath })
+        return
+      }
+
+      let currentDirFiles = []
+      
+      switch (share.type) {
+        case 'local':
+          currentDirFiles = await this.scanLocalDirectoryLight(share.path, relativePath, shareId, depth)
+          break
+        case 'smb':
+          currentDirFiles = await this.scanSMBDirectoryLight(share, relativePath, shareId, depth)
+          break
+        default:
+          logger.warn('不支持的分享类型用于增量更新', { shareId, type: share.type })
+          return
+      }
+
+      // 处理当前目录的文件
+      const subdirectories = []
+      for (const fileInfo of currentDirFiles) {
+        filesMap.set(fileInfo.path, fileInfo)
+        
+        if (fileInfo.type === 'directory') {
+          subdirectories.push(fileInfo.path)
+        }
+      }
+
+      // 递归处理有变更的子目录
+      for (const dirPath of subdirectories) {
+        await this.scanChangedDirectories(share, dirPath, filesMap, shareId, currentFiles, depth + 1)
+      }
+
+    } catch (error) {
+      logger.warn('扫描变更目录失败', { shareId, relativePath, error: error.message })
+    }
+  }
+
+  /**
+   * 轻量级本地目录扫描（仅获取目录结构，不递归）
+   */
+  async scanLocalDirectoryLight(basePath, relativePath, shareId, depth) {
+    const fullPath = path.join(basePath, relativePath)
+    const files = []
+    
+    try {
+      const items = await fs.readdir(fullPath)
+      
+      for (const item of items) {
+        const itemPath = path.join(fullPath, item)
+        const itemRelativePath = path.join(relativePath, item).replace(/\\/g, '/')
+        const stats = await fs.stat(itemPath)
+
+        const fileInfo = {
+          name: item,
+          path: itemRelativePath.startsWith('/') ? itemRelativePath : '/' + itemRelativePath,
+          fullPath: itemPath,
+          type: stats.isDirectory() ? 'directory' : 'file',
+          size: stats.size || 0,
+          modified: stats.mtime.toISOString(),
+          extension: stats.isFile() ? path.extname(item).toLowerCase() : undefined,
+          depth: depth,
+          parentPath: relativePath || '/',
+          searchableText: item.toLowerCase(),
+          nameWords: this.tokenizeName(item),
+          lastModified: stats.mtime.getTime(),
+          inode: stats.ino
+        }
+
+        files.push(fileInfo)
+      }
+    } catch (error) {
+      logger.debug('扫描本地目录失败', { fullPath, error: error.message })
+    }
+    
+    return files
+  }
+
+  /**
+   * 轻量级SMB目录扫描（仅获取目录结构，不递归）
+   */
+  async scanSMBDirectoryLight(share, relativePath, shareId, depth) {
+    const files = []
+    
+    try {
+      const smbConfig = share.smbConfig || await this.getSMBConfig(share.id)
+      if (!smbConfig) {
+        throw new Error('SMB配置不存在')
+      }
+
+      let smbRemotePath
+      if (depth === 0) {
+        smbRemotePath = share.path || '/'
+      } else {
+        smbRemotePath = relativePath
+      }
+      
+      const result = await this.fileSystemService.browseSMBDirectory(
+        smbConfig,
+        smbRemotePath,
+        { limit: 10000, offset: 0 } // 单次扫描限制，避免过大
+      )
+
+      for (const file of result.files) {
+        const fileInfo = {
+          name: file.name,
+          path: file.path,
+          fullPath: file.path,
+          type: file.type,
+          size: file.size || 0,
+          modified: file.modified,
+          extension: file.extension,
+          depth: depth,
+          parentPath: relativePath || '/',
+          searchableText: file.name.toLowerCase(),
+          nameWords: this.tokenizeName(file.name),
+          lastModified: new Date(file.modified).getTime()
+        }
+
+        files.push(fileInfo)
+      }
+
+    } catch (error) {
+      logger.warn('扫描SMB目录失败', { relativePath, error: error.message })
+    }
+    
+    return files
+  }
+
+  /**
+   * 优化的变更检测（用于手动触发的增量更新）
+   */
+  async detectChangesOptimized(shareId, share) {
+    const changes = {
+      added: [],
+      modified: [],
+      deleted: [],
+      totalChanges: 0
+    }
+
+    try {
+      // 获取当前索引和hash记录
+      const currentIndex = this.indexes.get(shareId) || []
+      const currentHashes = this.fileHashes.get(shareId) || new Map()
+      const currentFiles = new Map(currentIndex.map(item => [item.path, item]))
+
+      logger.info('开始优化的变更检测', { 
+        shareId, 
+        currentFileCount: currentFiles.size 
+      })
+
+      // 对于手动触发，我们采用采样检测策略：
+      // 1. 首先检查根目录和主要目录的变更
+      // 2. 如果发现变更，再进行更详细的扫描
+      
+      const latestFiles = new Map()
+      
+      // 第一阶段：快速采样检测（只检查前几层目录结构）
+      await this.scanSampleDirectories(share, '', latestFiles, shareId, 2) // 只扫描2层深度
+      
+      // 检测新增和修改的文件（采样方式）
+      let sampleChanges = 0
+      const sampleSize = Math.min(latestFiles.size, 100) // 采样100个文件
+      let sampledFiles = 0
+      
+      for (const [filePath, fileInfo] of latestFiles.entries()) {
+        if (sampledFiles >= sampleSize) break
+        
+        const currentHash = currentHashes.get(filePath)
+        const newHash = this.calculateFileHash(fileInfo)
+
+        if (!currentFiles.has(filePath)) {
+          changes.added.push({
+            ...fileInfo,
+            hash: newHash
+          })
+          sampleChanges++
+        } else if (currentHash !== newHash) {
+          changes.modified.push({
+            ...fileInfo,
+            hash: newHash,
+            oldHash: currentHash
+          })
+          sampleChanges++
+        }
+        
+        sampledFiles++
+      }
+      
+      // 如果采样检测发现变更比例较高，进行完整扫描
+      const sampleChangeRatio = sampleChanges / Math.max(sampledFiles, 1)
+      
+      if (sampleChangeRatio > 0.1) { // 如果采样中10%以上的文件有变更
+        logger.info('采样检测发现较多变更，进行完整扫描', { 
+          shareId,
+          sampleChangeRatio: Math.round(sampleChangeRatio * 100) + '%'
+        })
+        
+        // 清空之前的结果，进行完整扫描
+        changes.added = []
+        changes.modified = []
+        changes.deleted = []
+        latestFiles.clear()
+        
+        // 完整扫描（使用原有的智能扫描方法）
+        await this.scanChangedDirectories(share, '', latestFiles, shareId, currentFiles)
+        
+        // 重新检测所有变更
+        for (const [filePath, fileInfo] of latestFiles.entries()) {
+          const currentHash = currentHashes.get(filePath)
+          const newHash = this.calculateFileHash(fileInfo)
+
+          if (!currentFiles.has(filePath)) {
+            changes.added.push({
+              ...fileInfo,
+              hash: newHash
+            })
+          } else if (currentHash !== newHash) {
+            changes.modified.push({
+              ...fileInfo,
+              hash: newHash,
+              oldHash: currentHash
+            })
+          }
+        }
+        
+        // 检测删除的文件
+        const scannedDirectories = new Set()
+        for (const [filePath] of latestFiles.entries()) {
+          const dir = path.dirname(filePath)
+          scannedDirectories.add(dir)
+        }
+
+        for (const [filePath, fileInfo] of currentFiles.entries()) {
+          const dir = path.dirname(filePath)
+          if (scannedDirectories.has(dir) && !latestFiles.has(filePath)) {
+            changes.deleted.push(fileInfo)
+          }
+        }
+      }
+
+      changes.totalChanges = changes.added.length + changes.modified.length + changes.deleted.length
+
+      logger.info('优化变更检测完成', {
+        shareId,
+        added: changes.added.length,
+        modified: changes.modified.length,
+        deleted: changes.deleted.length,
+        scannedFiles: latestFiles.size,
+        method: sampleChangeRatio > 0.1 ? 'full_scan' : 'sample_scan'
+      })
+
+      return changes
+    } catch (error) {
+      logger.error('优化变更检测失败', { shareId, error: error.message })
+      return changes
+    }
+  }
+
+  /**
+   * 采样目录扫描（快速检测少量目录的变更）
+   */
+  async scanSampleDirectories(share, relativePath, filesMap, shareId, maxDepth, depth = 0) {
+    if (depth >= maxDepth) return
+
+    try {
+      let currentDirFiles = []
+      
+      switch (share.type) {
+        case 'local':
+          currentDirFiles = await this.scanLocalDirectoryLight(share.path, relativePath, shareId, depth)
+          break
+        case 'smb':
+          currentDirFiles = await this.scanSMBDirectoryLight(share, relativePath, shareId, depth)
+          break
+        default:
+          return
+      }
+
+      // 处理当前目录的文件
+      const subdirectories = []
+      for (const fileInfo of currentDirFiles) {
+        filesMap.set(fileInfo.path, fileInfo)
+        
+        if (fileInfo.type === 'directory' && depth < maxDepth - 1) {
+          subdirectories.push(fileInfo.path)
+        }
+      }
+
+      // 只递归处理前几个子目录（限制扫描范围）
+      const maxSubDirs = Math.max(1, Math.floor(10 / (depth + 1))) // 深度越深，扫描的子目录越少
+      for (let i = 0; i < Math.min(subdirectories.length, maxSubDirs); i++) {
+        await this.scanSampleDirectories(share, subdirectories[i], filesMap, shareId, maxDepth, depth + 1)
+      }
+
+    } catch (error) {
+      logger.debug('采样扫描目录失败', { shareId, relativePath, error: error.message })
+    }
+  }
+
+  /**
+   * 获取分享的配置
+   */
+  async getShareConfig(shareId) {
+    const normalizedShareId = parseInt(shareId)
+    
+    try {
+      // 先从数据库读取配置
+      const db = require('../config/database')
+      const query = `
+        SELECT incremental_update_enabled, incremental_check_interval, 
+               full_rebuild_threshold, incremental_config_updated_at
+        FROM shared_paths 
+        WHERE id = ?
+      `
+      const row = db.prepare(query).get(normalizedShareId)
+      
+      if (row) {
+        const config = {
+          incrementalUpdateEnabled: Boolean(row.incremental_update_enabled),
+          incrementalCheckInterval: row.incremental_check_interval || this.config.incrementalCheckInterval,
+          fullRebuildThreshold: row.full_rebuild_threshold || this.config.fullRebuildThreshold,
+          lastUpdated: row.incremental_config_updated_at ? new Date(row.incremental_config_updated_at).getTime() : Date.now()
+        }
+        
+        // 缓存到内存中
+        this.shareConfigs.set(normalizedShareId, config)
+        return config
+      }
+    } catch (error) {
+      logger.error('从数据库读取分享配置失败', { shareId: normalizedShareId, error: error.message })
+    }
+    
+    // 如果数据库读取失败，返回默认配置
+    const defaultConfig = {
+      incrementalUpdateEnabled: this.config.enableIncrementalUpdate,
+      incrementalCheckInterval: this.config.incrementalCheckInterval,
+      fullRebuildThreshold: this.config.fullRebuildThreshold,
+      lastUpdated: Date.now()
+    }
+    this.shareConfigs.set(normalizedShareId, defaultConfig)
+    return defaultConfig
+  }
+
+  /**
+   * 设置分享的配置
+   */
+  async setShareConfig(shareId, config) {
+    const normalizedShareId = parseInt(shareId)
+    const currentConfig = await this.getShareConfig(normalizedShareId)
+    
+    const newConfig = {
+      ...currentConfig,
+      ...config,
+      lastUpdated: Date.now()
+    }
+    
+    try {
+      // 保存到数据库
+      const db = require('../config/database')
+      const updateQuery = `
+        UPDATE shared_paths 
+        SET incremental_update_enabled = ?,
+            incremental_check_interval = ?,
+            full_rebuild_threshold = ?,
+            incremental_config_updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `
+      
+      const stmt = db.prepare(updateQuery)
+      const result = stmt.run(
+        newConfig.incrementalUpdateEnabled ? 1 : 0,
+        newConfig.incrementalCheckInterval,
+        newConfig.fullRebuildThreshold,
+        normalizedShareId
+      )
+      
+      if (result.changes > 0) {
+        // 更新内存缓存
+        this.shareConfigs.set(normalizedShareId, newConfig)
+        
+        // 如果更新了增量更新配置，重启该分享的定时器
+        if (config.incrementalUpdateEnabled !== undefined || 
+            config.incrementalCheckInterval !== undefined) {
+          this.stopIncrementalUpdateForShare(normalizedShareId)
+          if (newConfig.incrementalUpdateEnabled) {
+            await this.startIncrementalUpdateForShare(normalizedShareId)
+          }
+        }
+        
+        logger.info('分享配置已更新并保存到数据库', { shareId: normalizedShareId, config: newConfig })
+        return newConfig
+      } else {
+        throw new Error('分享不存在或更新失败')
+      }
+    } catch (error) {
+      logger.error('保存分享配置到数据库失败', { shareId: normalizedShareId, error: error.message })
+      throw error
+    }
+  }
+
+  /**
+   * 获取所有分享的配置
+   */
+  getAllShareConfigs() {
+    const configs = {}
+    for (const [shareId, config] of this.shareConfigs.entries()) {
+      configs[shareId] = config
+    }
+    return configs
+  }
+
+  /**
+   * 批量设置分享配置
+   */
+  setMultipleShareConfigs(configs) {
+    const results = {}
+    for (const [shareId, config] of Object.entries(configs)) {
+      try {
+        results[shareId] = this.setShareConfig(shareId, config)
+      } catch (error) {
+        logger.error('设置分享配置失败', { shareId, error: error.message })
+        results[shareId] = { error: error.message }
+      }
+    }
+    return results
   }
 }
 

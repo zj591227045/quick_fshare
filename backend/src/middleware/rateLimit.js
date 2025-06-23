@@ -119,6 +119,15 @@ const browseRateLimit = createRateLimiter({
 });
 
 /**
+ * 索引状态查询速率限制（更宽松）
+ */
+const indexStatusRateLimit = createRateLimiter({
+  windowMs: 60 * 1000, // 1分钟
+  max: 100, // 每分钟最多100个索引状态查询
+  message: '索引状态查询过于频繁，请稍后重试',
+});
+
+/**
  * 缩略图生成速率限制
  */
 const thumbnailRateLimit = createRateLimiter({
@@ -228,6 +237,7 @@ module.exports = {
   loginRateLimit,
   downloadRateLimit,
   browseRateLimit,
+  indexStatusRateLimit,
   thumbnailRateLimit,
   adminRateLimit,
   searchRateLimit,
