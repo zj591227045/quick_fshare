@@ -213,7 +213,7 @@ class ApiClient {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       }),
 
-    changePassword: (data: { oldPassword: string; newPassword: string }): Promise<ApiResponse> =>
+    changePassword: (data: { currentPassword: string; newPassword: string }): Promise<ApiResponse> =>
       this.request({
         method: 'PUT',
         url: '/auth/password',

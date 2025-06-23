@@ -44,6 +44,18 @@ const adminSchemas = {
         password: commonSchemas.password
     }),
 
+    // 修改密码
+    changePassword: Joi.object({
+        currentPassword: Joi.string().required()
+            .messages({
+                'any.required': '请输入当前密码'
+            }),
+        newPassword: commonSchemas.password.required()
+            .messages({
+                'any.required': '请输入新密码'
+            })
+    }),
+
     // 登录验证
     login: Joi.object({
         username: Joi.string().required(),
