@@ -2,9 +2,7 @@ version: '3.8'
 
 services:
   quick-fshare-all-in-one:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
+    image: zj591227045/quick-fshare:0.1.0
     container_name: quick-fshare-single
     ports:
       - "80:80"
