@@ -72,6 +72,9 @@ RUN echo 'user nginx;' > /etc/nginx/nginx.conf && \
 # ======== 一次性设置所有配置和目录 ========
 RUN mkdir -p \
     /app/logs \
+    /app/data/logs \
+    /app/data/uploads \
+    /app/data/thumbnails \
     /app/database \
     /app/uploads \
     /app/thumbnails \
@@ -79,10 +82,13 @@ RUN mkdir -p \
     # 复制前端文件到nginx目录并清理源文件
     cp -r /app/frontend/dist/* /usr/share/nginx/html/ && \
     rm -rf /app/frontend && \
+    # 设置目录权限
+    chown -R nobody:nobody /app/logs /app/data /app/database /app/uploads /app/thumbnails && \
+    chmod -R 755 /app/logs /app/data /app/database /app/uploads /app/thumbnails && \
     # 创建Supervisor配置
     printf '[supervisord]\nnodaemon=true\nuser=root\nlogfile=/var/log/supervisord.log\npidfile=/var/run/supervisord.pid\n\n[program:backend]\ncommand=node server.js\ndirectory=/app/backend\nuser=nobody\nautostart=true\nautorestart=true\nstderr_logfile=/var/log/backend-error.log\nstdout_logfile=/var/log/backend.log\nenvironment=NODE_ENV=production,PORT=3001,DB_PATH=/app/database/fshare.db,UPLOAD_PATH=/app/uploads,THUMBNAIL_PATH=/app/thumbnails,LOG_LEVEL=info\n\n[program:nginx]\ncommand=nginx -g "daemon off;"\nuser=root\nautostart=true\nautorestart=true\nstderr_logfile=/var/log/nginx-error.log\nstdout_logfile=/var/log/nginx.log\n\n[supervisorctl]\nserverurl=unix:///tmp/supervisor.sock\n\n[unix_http_server]\nfile=/tmp/supervisor.sock\n' > /etc/supervisord.conf && \
     # 创建启动脚本
-    printf '#!/bin/sh\n\necho "🚀 启动 Quick FShare 单一容器..."\n\n# 初始化数据库\necho "📊 初始化数据库..."\ncd /app/backend && node scripts/init-db.js\n\n# 设置权限\necho "🔐 设置文件权限..."\nchown -R nobody:nobody /app/logs /app/database /app/uploads /app/thumbnails\nchmod -R 755 /app/logs /app/database /app/uploads /app/thumbnails\n\necho "✅ 初始化完成，启动服务..."\n\n# 使用supervisor管理多个进程\nexec supervisord -c /etc/supervisord.conf\n' > /app/start.sh && \
+    printf '#!/bin/sh\n\necho "🚀 启动 Quick FShare 单一容器..."\n\n# 确保所有目录存在并设置权限\necho "📁 确保目录结构..."\nmkdir -p /app/logs /app/data/logs /app/data/uploads /app/data/thumbnails /app/database /app/uploads /app/thumbnails\nchown -R nobody:nobody /app/logs /app/data /app/database /app/uploads /app/thumbnails\nchmod -R 755 /app/logs /app/data /app/database /app/uploads /app/thumbnails\n\n# 初始化数据库\necho "📊 初始化数据库..."\ncd /app/backend && node scripts/init-db.js\n\necho "✅ 初始化完成，启动服务..."\n\n# 使用supervisor管理多个进程\nexec supervisord -c /etc/supervisord.conf\n' > /app/start.sh && \
     chmod +x /app/start.sh
 
 # ======== 设置环境变量 ========
@@ -106,7 +112,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost/health && curl -f http://localhost:3001/api/health || exit 1
 
 # ======== 数据卷 ========
-VOLUME ["/app/database", "/app/uploads", "/app/thumbnails", "/app/logs"]
+VOLUME ["/app/database", "/app/uploads", "/app/thumbnails", "/app/logs", "/app/data"]
 
 # 使用dumb-init处理信号
 ENTRYPOINT ["dumb-init", "--"]

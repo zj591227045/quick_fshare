@@ -22,6 +22,7 @@ services:
       - app_uploads:/app/uploads
       - app_thumbnails:/app/thumbnails
       - app_logs:/app/logs
+      - app_data:/app/data
       - ${SHARED_VOLUMES:-./data}:/app/shared:ro
     restart: unless-stopped
     healthcheck:
@@ -39,4 +40,6 @@ volumes:
   app_thumbnails:
     driver: local
   app_logs:
+    driver: local
+  app_data:
     driver: local 
