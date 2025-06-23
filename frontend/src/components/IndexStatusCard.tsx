@@ -16,7 +16,6 @@ import {
 import { 
   DatabaseOutlined,
   ReloadOutlined,
-  ClockCircleOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
   SyncOutlined,

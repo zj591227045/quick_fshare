@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Button, Space, Tag, Typography, Modal, Form, Input, Select, Collapse, App, Switch, Drawer, Tooltip } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, LinkOutlined, FolderOutlined, DatabaseOutlined, CloudServerOutlined, SettingOutlined, ReloadOutlined, BulkOutlined, ClearOutlined } from '@ant-design/icons';
+import { Card, Table, Button, Space, Tag, Typography, Modal, Form, Input, Select, Collapse, App, Switch, Drawer } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, LinkOutlined, FolderOutlined, DatabaseOutlined, CloudServerOutlined, SettingOutlined, ReloadOutlined, ClearOutlined } from '@ant-design/icons';
 import { SharePath, CreateShareRequest } from '@/types';
 import { sharesApi, browseApi } from '@/services/api';
-import IndexStatusCard from '@/components/IndexStatusCard';
 import IndexManagementPanel from '@/components/IndexManagementPanel';
 import IncrementalConfigModal from '@/components/IncrementalConfigModal';
 

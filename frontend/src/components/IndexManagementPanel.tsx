@@ -6,16 +6,13 @@ import {
   Tag, 
   Typography, 
   Progress, 
-  Tooltip, 
   App,
   Spin,
   Statistic,
   Row,
   Col,
   Alert,
-  Timeline,
-  Descriptions,
-  List
+  Descriptions
 } from 'antd';
 import { 
   DatabaseOutlined,
@@ -26,7 +23,6 @@ import {
   SyncOutlined,
   HistoryOutlined,
   FileOutlined,
-  FolderOutlined,
   WarningOutlined
 } from '@ant-design/icons';
 import { browseApi } from '@/services/api';
@@ -272,7 +268,7 @@ const IndexManagementPanel: React.FC<IndexManagementPanelProps> = ({
       return <Spin />;
     }
 
-    const { fileExists, fileSize, humanFileSize, indexPath } = indexManagement;
+    const { fileExists, humanFileSize, indexPath } = indexManagement;
 
     return (
       <Card title="磁盘信息" style={{ marginBottom: 16 }}>

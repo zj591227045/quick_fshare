@@ -6,10 +6,10 @@ import {
   InputNumber, 
   Slider, 
   Space, 
-  Typography, 
   Alert, 
   App,
-  Divider
+  Divider,
+  Spin
 } from 'antd';
 import { 
   SettingOutlined,
@@ -17,8 +17,6 @@ import {
   ThunderboltOutlined
 } from '@ant-design/icons';
 import { browseApi } from '@/services/api';
-
-const { Text, Title } = Typography;
 
 interface IncrementalConfigModalProps {
   visible: boolean;
