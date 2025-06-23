@@ -1,6 +1,10 @@
 const bcrypt = require('bcrypt');
 const dbManager = require('../config/database');
-const { logDatabase, logSecurity } = require('../utils/logger');
+// const { logDatabase, logSecurity } = require('../utils/logger');
+
+// 临时占位符函数，提升性能
+const logDatabase = () => {};
+const logSecurity = () => {};
 
 class Share {
     constructor(data = {}) {
@@ -104,14 +108,14 @@ class Share {
                 return shareId;
             });
 
-            const duration = Date.now() - startTime;
-            logDatabase('INSERT', 'shared_paths', duration, { name, type, access_type });
+            // const duration = Date.now() - startTime;
+            // logDatabase('INSERT', 'shared_paths', duration, { name, type, access_type });
 
             // 返回新创建的分享路径
             return await this.findById(result);
         } catch (error) {
-            const duration = Date.now() - startTime;
-            logDatabase('INSERT_ERROR', 'shared_paths', duration, { error: error.message });
+            // const duration = Date.now() - startTime;
+            // logDatabase('INSERT_ERROR', 'shared_paths', duration, { error: error.message });
             throw error;
         }
     }
@@ -154,8 +158,8 @@ class Share {
                 );
             }
 
-            const duration = Date.now() - startTime;
-            logDatabase('SELECT', 'shared_paths', duration, { id });
+            // const duration = Date.now() - startTime;
+            // logDatabase('SELECT', 'shared_paths', duration, { id });
 
             // 创建Share实例
             const shareInstance = new Share(share);

@@ -135,13 +135,7 @@ const updateShare = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { name, description, path, type, access_type, password, enabled, sortOrder, smb_config, nfs_config } = req.body;
     
-    // 添加调试日志
-    console.log('=== 更新分享路径请求数据 ===');
-    console.log('ID:', id);
-    console.log('请求体:', JSON.stringify(req.body, null, 2));
-    console.log('访问类型:', access_type);
-    console.log('密码:', password ? '[已设置]' : '[未设置]');
-    console.log('==========================');
+
     
     // 检查分享路径是否存在
     const existingShare = await Share.findById(id);

@@ -53,7 +53,7 @@ router.get('/user', requireAuth, authController.getCurrentUser);
 router.put('/password',
   requireAuth,
   strictRateLimit,
-  // 暂时移除验证中间件，在控制器中直接验证
+  validate.body(schemas.admin.changePassword),
   authController.changePassword
 );
 

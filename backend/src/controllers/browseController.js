@@ -67,28 +67,17 @@ class BrowseController {
         })
       }
 
-      // 添加调试日志
-      console.log('=== 密码验证检查 ===');
-      console.log('分享ID:', shareId);
-      console.log('访问类型:', share.accessType);
-      console.log('需要密码验证:', share.accessType === 'password');
-      console.log('====================');
-
       // 检查密码保护
       if (share.accessType === 'password') {
         const token = req.query.token || req.headers['x-access-token']
-        console.log('收到的令牌:', token ? '[已提供]' : '[未提供]');
-        console.log('令牌验证结果:', token ? verifyTemporaryToken(token, share.id) : 'N/A');
         
         if (!token || !verifyTemporaryToken(token, share.id)) {
-          console.log('密码验证失败，返回401');
           return res.status(401).json({
             success: false,
             message: '需要密码验证',
             require_password: true
           })
         }
-        console.log('密码验证通过');
       }
 
       // 浏览文件（根据分享类型自动选择方式）

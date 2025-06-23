@@ -264,67 +264,22 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 const changePassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   
-  // 添加调试日志
-  console.log('=== 密码修改请求 ===');
-  console.log('请求体:', req.body);
-  console.log('currentPassword:', currentPassword);
-  console.log('newPassword:', newPassword);
-  
-  // 验证参数
-  if (!currentPassword) {
+  // 基本参数验证（路由中间件已做详细验证）
+  if (!currentPassword || !newPassword) {
     return res.status(400).json({
       success: false,
       error: {
-        code: 'MISSING_CURRENT_PASSWORD',
-        message: '请输入当前密码',
+        code: 'MISSING_PARAMETERS',
+        message: '缺少必需参数',
       },
     });
   }
-
-  if (!newPassword) {
-    return res.status(400).json({
-      success: false,
-      error: {
-        code: 'MISSING_NEW_PASSWORD',
-        message: '请输入新密码',
-      },
-    });
-  }
-
-  // 验证新密码格式
-  if (newPassword.length < 6) {
-    return res.status(400).json({
-      success: false,
-      error: {
-        code: 'PASSWORD_TOO_SHORT',
-        message: '密码长度至少6位',
-      },
-    });
-  }
-
-  // 验证密码包含大小写字母和数字
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
-  if (!passwordRegex.test(newPassword)) {
-    console.log('密码格式验证失败');
-    return res.status(400).json({
-      success: false,
-      error: {
-        code: 'PASSWORD_FORMAT_INVALID',
-        message: '密码必须包含至少一个小写字母、一个大写字母和一个数字',
-      },
-    });
-  }
-  
-  console.log('密码格式验证通过');
   
   try {
-    console.log('开始验证当前密码，用户名:', req.user.username);
     // 验证当前密码
     const admin = await Admin.authenticate(req.user.username, currentPassword);
-    console.log('当前密码验证结果:', admin ? '成功' : '失败');
     
     if (!admin) {
-      console.log('当前密码验证失败，返回400错误');
       logSecurityEvent('PASSWORD_CHANGE_FAILED', req, { 
         username: req.user.username, 
         reason: 'invalid_current_password' 
@@ -339,10 +294,8 @@ const changePassword = asyncHandler(async (req, res) => {
       });
     }
     
-    console.log('开始更新密码...');
     // 更新密码
     await Admin.update(req.user.id, { password: newPassword });
-    console.log('密码更新成功');
     
     logger.logAuth('密码修改成功', req.user.username, req.ip);
     logSecurityEvent('PASSWORD_CHANGED', req, { username: req.user.username });
@@ -353,7 +306,6 @@ const changePassword = asyncHandler(async (req, res) => {
     });
     
   } catch (error) {
-    console.log('密码修改过程中发生错误:', error);
     logger.error('修改密码失败:', error);
     
     res.status(500).json({

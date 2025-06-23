@@ -99,10 +99,6 @@ const BrowsePage: React.FC = () => {
   const verifySharePassword = async (password: string) => {
     if (!shareId) return false;
     
-    console.log('=== 密码验证开始 ===');
-    console.log('shareId:', shareId);
-    console.log('password:', password);
-    
     setPasswordLoading(true);
     try {
       const response = await browseApi.verifyPassword({
@@ -110,28 +106,18 @@ const BrowsePage: React.FC = () => {
         password
       });
       
-      console.log('=== 密码验证响应 ===');
-      console.log('response:', response);
-      
       if (response.success && response.data?.token) {
-        console.log('=== 密码验证成功 ===');
-        console.log('收到token:', response.data.token);
         setAccessToken(response.data.token);
         setPasswordModalVisible(false);
         
         // 验证成功后重新加载文件列表，直接传递token
-        console.log('=== 准备重新加载文件列表 ===');
         await loadFiles(currentPath, true, 0, response.data.token);
         return true;
       } else {
-        console.log('=== 密码验证失败 ===');
-        console.log('response.message:', response.message);
         message.error(response.message || '密码错误');
         return false;
       }
     } catch (error) {
-      console.log('=== 密码验证异常 ===');
-      console.log('error:', error);
       message.error('密码验证失败');
       return false;
     } finally {
@@ -308,20 +294,12 @@ const BrowsePage: React.FC = () => {
         message.error(response.message || '加载文件列表失败');
       }
     } catch (error: any) {
-      console.log('=== loadFiles 错误详情 ===');
-      console.log('错误对象:', error);
-      console.log('响应状态:', error.response?.status);
-      console.log('响应数据:', error.response?.data);
-      
       // 检查是否是401错误（需要密码验证）
       if (error.response?.status === 401) {
-        console.log('收到401错误，显示密码框');
         setPasswordModalVisible(true);
       } else if (error.response?.data?.require_password) {
-        console.log('API返回需要密码验证，显示密码框');
         setPasswordModalVisible(true);
       } else {
-        console.log('其他错误:', error.message);
         message.error('加载文件列表失败: ' + (error.message || '未知错误'));
       }
     } finally {

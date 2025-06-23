@@ -1,6 +1,10 @@
 const bcrypt = require('bcrypt');
 const dbManager = require('../config/database');
-const { logDatabase, logSecurity } = require('../utils/logger');
+// const { logDatabase, logSecurity } = require('../utils/logger');
+
+// 临时占位符函数，提升性能
+const logDatabase = () => {};
+const logSecurity = () => {};
 
 class Admin {
     constructor(data = {}) {
