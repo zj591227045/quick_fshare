@@ -3,7 +3,7 @@ import { Card, Button, Typography, Descriptions, Tag, Space, message, Modal } fr
 import { apiConfigManager } from '@/utils/apiConfig'
 import api from '@/services/api'
 
-const { Title, Text, Paragraph } = Typography
+const { Text, Paragraph } = Typography
 
 interface ApiDebugPanelProps {
   visible?: boolean

@@ -24,7 +24,7 @@ class ApiClient {
     resolve: (token: string) => void
     reject: (error: any) => void
   }> = []
-  private config: ApiConfig | null = null
+  private apiConfig: ApiConfig | null = null
 
   constructor() {
     // 使用临时配置创建client，稍后会更新
@@ -45,15 +45,15 @@ class ApiClient {
    */
   private async initializeConfig() {
     try {
-      this.config = await getApiConfig()
+      this.apiConfig = await getApiConfig()
       
       // 更新axios实例的配置
-      this.client.defaults.baseURL = this.config.baseURL
-      this.client.defaults.timeout = this.config.timeout
+      this.client.defaults.baseURL = this.apiConfig.baseURL
+      this.client.defaults.timeout = this.apiConfig.timeout
       
       console.log('✅ API客户端配置完成:', {
-        baseURL: this.config.baseURL,
-        environment: this.config.environment
+        baseURL: this.apiConfig.baseURL,
+        environment: this.apiConfig.environment
       })
     } catch (error) {
       console.error('❌ API配置初始化失败:', error)
@@ -65,9 +65,9 @@ class ApiClient {
    */
   getApiInfo() {
     return {
-      config: this.config,
+      config: this.apiConfig,
       currentBaseURL: this.client.defaults.baseURL,
-      isConfigured: this.config !== null
+      isConfigured: this.apiConfig !== null
     }
   }
 
@@ -77,9 +77,9 @@ class ApiClient {
   async reconfigure(newBaseUrl?: string) {
     try {
       const { apiConfigManager } = await import('@/utils/apiConfig')
-      this.config = await apiConfigManager.reconfigure(newBaseUrl)
-      this.client.defaults.baseURL = this.config.baseURL
-      console.log('✅ API重新配置成功:', this.config.baseURL)
+      this.apiConfig = await apiConfigManager.reconfigure(newBaseUrl)
+      this.client.defaults.baseURL = this.apiConfig.baseURL
+      console.log('✅ API重新配置成功:', this.apiConfig.baseURL)
     } catch (error) {
       console.error('❌ API重新配置失败:', error)
       throw error
