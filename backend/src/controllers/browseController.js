@@ -93,6 +93,11 @@ class BrowseController {
       // 记录访问日志
       await this.logAccess(share.id, clientIp, decodedPath || '/', 'browse')
 
+      // 记录访问时间（用于智能索引调度）
+      const { getSearchIndexService } = require('../services/SearchIndexService')
+      const searchService = getSearchIndexService()
+      searchService.recordAccess(share.id)
+
       res.json({
         success: true,
         data: {
@@ -1014,30 +1019,31 @@ class BrowseController {
   }
 
   /**
-   * 获取分享的增量更新配置
+   * 获取分享配置
    */
   async getShareConfig(req, res) {
     try {
       const { shareId } = req.params
+      const { getSearchIndexService } = require('../services/SearchIndexService')
+      const searchService = getSearchIndexService()
       
-      const config = await this.searchIndexService.getShareConfig(shareId)
+      const config = await searchService.getShareConfig(shareId)
       
       res.json({
         success: true,
         data: config
       })
     } catch (error) {
-      logger.error('获取分享配置失败', { error: error.message })
+      logger.error('获取分享配置失败', { shareId: req.params.shareId, error: error.message })
       res.status(500).json({
         success: false,
-        message: '获取分享配置失败',
-        error: error.message
+        message: `获取配置失败: ${error.message}`
       })
     }
   }
 
   /**
-   * 设置分享的增量更新配置
+   * 设置分享配置
    */
   async setShareConfig(req, res) {
     try {
@@ -1045,67 +1051,41 @@ class BrowseController {
       const { 
         incrementalUpdateEnabled,
         incrementalCheckInterval,
-        fullRebuildThreshold 
+        fullRebuildThreshold
       } = req.body
+
+      const { getSearchIndexService } = require('../services/SearchIndexService')
+      const searchService = getSearchIndexService()
       
-      // 验证参数
-      const config = {}
-      
-      if (incrementalUpdateEnabled !== undefined) {
-        config.incrementalUpdateEnabled = Boolean(incrementalUpdateEnabled)
-      }
-      
-      if (incrementalCheckInterval !== undefined) {
-        const interval = parseInt(incrementalCheckInterval)
-        if (interval < 60000) { // 最小1分钟
-          return res.status(400).json({
-            success: false,
-            message: '检查间隔不能少于1分钟'
-          })
-        }
-        if (interval > 24 * 60 * 60 * 1000) { // 最大24小时
-          return res.status(400).json({
-            success: false,
-            message: '检查间隔不能超过24小时'
-          })
-        }
-        config.incrementalCheckInterval = interval
-      }
-      
-      if (fullRebuildThreshold !== undefined) {
-        const threshold = parseFloat(fullRebuildThreshold)
-        if (threshold < 0.1 || threshold > 1.0) {
-          return res.status(400).json({
-            success: false,
-            message: '重建阈值必须在0.1到1.0之间'
-          })
-        }
-        config.fullRebuildThreshold = threshold
-      }
-      
-      const result = await this.searchIndexService.setShareConfig(shareId, config)
-      
+      const config = await searchService.setShareConfig(shareId, {
+        incrementalUpdateEnabled,
+        incrementalCheckInterval,
+        fullRebuildThreshold
+      })
+
       res.json({
         success: true,
-        data: result,
-        message: '分享配置已更新'
+        data: config,
+        message: '配置已更新'
       })
     } catch (error) {
-      logger.error('设置分享配置失败', { error: error.message })
+      logger.error('设置分享配置失败', { shareId: req.params.shareId, error: error.message })
       res.status(500).json({
         success: false,
-        message: '设置分享配置失败',
-        error: error.message
+        message: `设置配置失败: ${error.message}`
       })
     }
   }
 
   /**
-   * 获取所有分享的配置
+   * 获取所有分享配置
    */
   async getAllShareConfigs(req, res) {
     try {
-      const configs = this.searchIndexService.getAllShareConfigs()
+      const { getSearchIndexService } = require('../services/SearchIndexService')
+      const searchService = getSearchIndexService()
+      
+      const configs = await searchService.getAllShareConfigs()
       
       res.json({
         success: true,
@@ -1115,8 +1095,7 @@ class BrowseController {
       logger.error('获取所有分享配置失败', { error: error.message })
       res.status(500).json({
         success: false,
-        message: '获取所有分享配置失败',
-        error: error.message
+        message: `获取配置失败: ${error.message}`
       })
     }
   }
