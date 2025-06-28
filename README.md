@@ -34,6 +34,7 @@ cd Quick_FShare
 ./scripts/manage.sh start
 
 # 或者使用Docker Compose
+cd docker
 docker-compose up -d
 ```
 
