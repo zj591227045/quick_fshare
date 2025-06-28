@@ -20,7 +20,8 @@ app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-
+// 设置代理信任，支持IPv6
+app.set('trust proxy', true);
 
 // 静态文件服务
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -98,9 +99,9 @@ async function startServer() {
       console.error('❌ 启动监控服务失败:', error.message);
     }
     
-    // 启动HTTP服务器
-    app.listen(PORT, () => {
-      console.log(`🚀 Quick FShare Backend 服务器运行在端口 ${PORT}`);
+    // 启动HTTP服务器，支持IPv4和IPv6
+    app.listen(PORT, '::', () => {
+      console.log(`🚀 Quick FShare Backend 服务器运行在端口 ${PORT} (IPv4 + IPv6)`);
       console.log(`📝 API 文档: http://localhost:${PORT}/`);
       console.log(`🔍 健康检查: http://localhost:${PORT}/api/health`);
     });

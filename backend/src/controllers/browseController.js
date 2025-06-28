@@ -33,6 +33,52 @@ class BrowseController {
     
     return shareByName
   }
+
+  /**
+   * 获取客户端IP地址，支持IPv6
+   */
+  getClientIP(req) {
+    // 从多个来源尝试获取真实IP
+    let clientIp = req.ip 
+      || req.headers['x-client-ip']
+      || req.headers['x-real-ip'] 
+      || req.headers['x-forwarded-for']?.split(',')[0]?.trim()
+      || req.connection?.remoteAddress 
+      || req.socket?.remoteAddress
+      || 'unknown';
+
+    // 清理IPv6映射IPv4地址
+    if (clientIp && clientIp.startsWith('::ffff:')) {
+      clientIp = clientIp.substring(7);
+    }
+
+    // 处理可能的端口号
+    if (clientIp && clientIp.includes(':') && !clientIp.startsWith('[')) {
+      const lastColonIndex = clientIp.lastIndexOf(':');
+      // 判断是否是IPv6地址还是IPv4地址带端口
+      if (clientIp.includes('.')) {
+        // IPv4地址带端口，移除端口
+        clientIp = clientIp.substring(0, lastColonIndex);
+      }
+    }
+
+          return clientIp;
+  }
+
+  /**
+   * 格式化客户端IP地址，确保IPv6地址正确存储
+   */
+  formatClientIP(ip) {
+    if (!ip || ip === 'unknown') return ip
+    
+    // 如果是IPv6地址且没有方括号，添加方括号以便正确存储
+    if (ip.includes(':') && !ip.includes('.') && !ip.startsWith('[')) {
+      return `[${ip}]`
+    }
+    
+    return ip
+  }
+
   /**
    * 浏览分享路径的文件列表
    */
@@ -40,7 +86,7 @@ class BrowseController {
     try {
       const { shareId } = req.params
       const { path: requestPath = '', sort = 'name', order = 'asc', search = '' } = req.query
-      const clientIp = req.ip || req.connection.remoteAddress
+      const clientIp = this.getClientIP(req)
 
       // 解码URL编码的路径，处理中文字符
       const decodedPath = requestPath ? decodeURIComponent(requestPath) : ''
@@ -164,7 +210,7 @@ class BrowseController {
       }
 
       // 生成临时访问令牌 (24小时有效)
-      const clientIp = req.ip || req.connection.remoteAddress;
+      const clientIp = this.getClientIP(req);
       const token = generateTemporaryToken(share_id, clientIp);
 
       res.json({
@@ -192,7 +238,7 @@ class BrowseController {
     try {
       const { shareId } = req.params
       const filePath = decodeURIComponent(req.params[0]) // 获取完整的文件路径
-      const clientIp = req.ip || req.connection.remoteAddress
+      const clientIp = this.getClientIP(req)
 
       // 获取分享配置（支持ID或名称）
       const share = await this.findShareByIdOrName(shareId)
@@ -451,7 +497,7 @@ class BrowseController {
         limit = 100,
         offset = 0
       } = req.query
-      const clientIp = req.ip || req.connection.remoteAddress
+      const clientIp = this.getClientIP(req)
 
       if (!query || query.trim().length === 0) {
         return res.status(400).json({
@@ -980,11 +1026,21 @@ class BrowseController {
     try {
       const dbManager = require('../config/database')
 
+      // 确保IPv6地址格式正确
+      const formattedIp = this.formatClientIP(clientIp)
+
       await dbManager.run(
         `INSERT INTO access_logs (shared_path_id, client_ip, file_path, action, accessed_at)
          VALUES (?, ?, ?, ?, ?)`,
-        [shareId, clientIp, filePath, action, new Date().toISOString()]
+        [shareId, formattedIp, filePath, action, new Date().toISOString()]
       )
+
+      logger.info('访问日志已记录', {
+        shareId,
+        clientIp: formattedIp,
+        filePath,
+        action
+      })
     } catch (error) {
       logger.error('记录访问日志失败', { error: error.message })
     }
@@ -999,11 +1055,14 @@ class BrowseController {
 
       // 提取文件名
       const fileName = filePath.split('/').pop() || filePath
+      
+      // 确保IPv6地址格式正确
+      const formattedIp = this.formatClientIP(clientIp)
 
       await dbManager.run(
         `INSERT INTO download_records (shared_path_id, file_path, file_name, file_size, client_ip, completed, downloaded_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [shareId, filePath, fileName, fileSize, clientIp, 1, new Date().toISOString()]
+        [shareId, filePath, fileName, fileSize, formattedIp, 1, new Date().toISOString()]
       )
 
       logger.info('下载记录已保存', {
@@ -1011,7 +1070,7 @@ class BrowseController {
         filePath,
         fileName,
         fileSize,
-        clientIp
+        clientIp: formattedIp
       })
     } catch (error) {
       logger.error('记录下载记录失败', { error: error.message })

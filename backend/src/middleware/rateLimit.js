@@ -7,8 +7,31 @@ const { logSecurity: logSecurityEvent } = require('../utils/logger');
  * 获取客户端标识符
  */
 function getClientIdentifier(req) {
-  // 使用IP地址作为客户端标识符
-  return req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown';
+  // 改进IP地址获取，支持IPv6
+  let clientIp = req.ip 
+    || req.headers['x-client-ip']
+    || req.headers['x-real-ip'] 
+    || req.headers['x-forwarded-for']?.split(',')[0]?.trim()
+    || req.connection?.remoteAddress 
+    || req.socket?.remoteAddress 
+    || 'unknown';
+
+  // 清理IPv6映射IPv4地址
+  if (clientIp && clientIp.startsWith('::ffff:')) {
+    clientIp = clientIp.substring(7);
+  }
+
+  // 处理可能的端口号
+  if (clientIp && clientIp.includes(':') && !clientIp.startsWith('[')) {
+    const lastColonIndex = clientIp.lastIndexOf(':');
+    // 判断是否是IPv6地址还是IPv4地址带端口
+    if (clientIp.includes('.')) {
+      // IPv4地址带端口，移除端口
+      clientIp = clientIp.substring(0, lastColonIndex);
+    }
+  }
+
+  return clientIp;
 }
 
 /**
