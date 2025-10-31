@@ -753,6 +753,7 @@ const BrowsePage: React.FC = () => {
           <Input.Password
             placeholder="请输入访问密码"
             size="large"
+            autoComplete="new-password"
             onPressEnter={(e) => {
               const value = (e.target as HTMLInputElement).value;
               if (value.trim()) {

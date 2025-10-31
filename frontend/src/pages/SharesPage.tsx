@@ -523,7 +523,7 @@ const SharesPage: React.FC = () => {
                       name="smb_password"
                       label="密码"
                     >
-                      <Input.Password placeholder="SMB密码（可选）" />
+                      <Input.Password placeholder="SMB密码（可选）" autoComplete="new-password" />
                     </Form.Item>
 
                     <Form.Item
@@ -599,7 +599,7 @@ const SharesPage: React.FC = () => {
                   label="访问密码"
                   rules={[{ required: true, message: '请输入访问密码' }]}
                 >
-                  <Input.Password placeholder="请输入访问密码" />
+                  <Input.Password placeholder="请输入访问密码" autoComplete="new-password" />
                 </Form.Item>
               ) : null;
             }}

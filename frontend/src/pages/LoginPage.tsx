@@ -69,7 +69,7 @@ const LoginPage: React.FC = () => {
             <Input.Password
               prefix={<LockOutlined />}
               placeholder="密码"
-              autoComplete="current-password"
+              autoComplete="off"
             />
           </Form.Item>
 

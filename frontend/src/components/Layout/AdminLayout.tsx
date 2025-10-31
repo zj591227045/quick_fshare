@@ -384,6 +384,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               >
                 <Input.Password
                   placeholder="请输入当前密码"
+                  autoComplete="new-password"
                   style={{
                     backgroundColor: 'var(--bg-color)',
                     borderColor: 'var(--border-color)',
@@ -406,6 +407,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               >
                 <Input.Password
                   placeholder="请输入新密码"
+                  autoComplete="new-password"
                   style={{
                     backgroundColor: 'var(--bg-color)',
                     borderColor: 'var(--border-color)',
@@ -432,6 +434,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               >
                 <Input.Password
                   placeholder="请再次输入新密码"
+                  autoComplete="new-password"
                   style={{
                     backgroundColor: 'var(--bg-color)',
                     borderColor: 'var(--border-color)',
