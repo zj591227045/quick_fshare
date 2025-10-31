@@ -131,61 +131,102 @@ class FileSystemService {
         limit
       })
 
-      // 快速模式：跳过stat调用，使用启发式判断
+      // 获取文件详细信息（包括大小和修改时间）
       const statStart = Date.now()
       const fileInfos = []
 
-      // 直接处理所有文件，不进行stat调用以提高性能
-      for (const item of paginatedItems) {
-        try {
+      // 批量获取文件stat信息，使用Promise.allSettled避免单个文件失败影响整体
+      const statPromises = paginatedItems.map(item => {
+        return new Promise((resolve) => {
           const itemPath = actualPath ? `${actualPath}/${item}` : item
-          
-          // 启发式判断文件类型
-          const hasExtension = path.extname(item).length > 0
-          const startsWithDot = item.startsWith('.')
-          const extension = hasExtension ? path.extname(item).toLowerCase() : undefined
-          
-          // 基于文件名模式的简单判断
-          const isDirectory = !hasExtension && !startsWithDot
-          const isFile = !isDirectory
 
-          // 计算相对路径：如果有basePath，则返回相对于basePath的路径
-          let relativePath
-          if (options.basePath) {
-            // 对于SMB分享，返回相对于basePath的路径
-            const fullPath = `/${itemPath}`
-            if (fullPath.startsWith(options.basePath)) {
-              relativePath = fullPath.substring(options.basePath.length) || '/'
-              if (!relativePath.startsWith('/')) {
-                relativePath = '/' + relativePath
+          smb2Client.stat(itemPath, (err, stats) => {
+            if (err) {
+              // 如果stat失败，使用启发式判断
+              logger.debug('SMB stat失败，使用启发式判断', { item, error: err.message })
+
+              const hasExtension = path.extname(item).length > 0
+              const startsWithDot = item.startsWith('.')
+              const extension = hasExtension ? path.extname(item).toLowerCase() : undefined
+              const isDirectory = !hasExtension && !startsWithDot
+              const isFile = !isDirectory
+
+              let relativePath
+              if (options.basePath) {
+                const fullPath = `/${itemPath}`
+                if (fullPath.startsWith(options.basePath)) {
+                  relativePath = fullPath.substring(options.basePath.length) || '/'
+                  if (!relativePath.startsWith('/')) {
+                    relativePath = '/' + relativePath
+                  }
+                } else {
+                  relativePath = fullPath
+                }
+              } else {
+                relativePath = `/${itemPath}`
               }
-            } else {
-              relativePath = fullPath
-            }
-          } else {
-            relativePath = `/${itemPath}`
-          }
 
-          fileInfos.push({
-            name: item,
-            path: relativePath,
-            type: isDirectory ? 'directory' : 'file',
-            size: 0, // 跳过大小信息以提高速度
-            modified: new Date().toISOString(), // 使用当前时间
-            extension: extension,
-            mime_type: isFile ? this.getMimeType(extension || '') : undefined,
-            has_thumbnail: isFile ? this.supportsThumbnail(extension || '') : false,
-            is_readable: isFile,
-            permissions: {
-              read: true,
-              write: false,
-              execute: false
+              resolve({
+                name: item,
+                path: relativePath,
+                type: isDirectory ? 'directory' : 'file',
+                size: 0,
+                modified: new Date().toISOString(),
+                extension: extension,
+                mime_type: isFile ? this.getMimeType(extension || '') : undefined,
+                has_thumbnail: isFile ? this.supportsThumbnail(extension || '') : false,
+                is_readable: isFile,
+                permissions: {
+                  read: true,
+                  write: false,
+                  execute: false
+                }
+              })
+            } else {
+              // stat成功，使用真实的文件信息
+              const isDirectory = stats.isDirectory ? stats.isDirectory() : (stats.mode && (stats.mode & 0o040000) !== 0)
+              const isFile = !isDirectory
+              const extension = isFile ? path.extname(item).toLowerCase() : undefined
+
+              let relativePath
+              if (options.basePath) {
+                const fullPath = `/${itemPath}`
+                if (fullPath.startsWith(options.basePath)) {
+                  relativePath = fullPath.substring(options.basePath.length) || '/'
+                  if (!relativePath.startsWith('/')) {
+                    relativePath = '/' + relativePath
+                  }
+                } else {
+                  relativePath = fullPath
+                }
+              } else {
+                relativePath = `/${itemPath}`
+              }
+
+              resolve({
+                name: item,
+                path: relativePath,
+                type: isDirectory ? 'directory' : 'file',
+                size: stats.size || 0,
+                modified: stats.mtime ? stats.mtime.toISOString() : new Date().toISOString(),
+                extension: extension,
+                mime_type: isFile ? this.getMimeType(extension || '') : undefined,
+                has_thumbnail: isFile ? this.supportsThumbnail(extension || '') : false,
+                is_readable: isFile,
+                permissions: {
+                  read: true,
+                  write: false,
+                  execute: false
+                }
+              })
             }
           })
-        } catch (error) {
-          logger.warn('跳过无法处理的SMB文件', { item, error: error.message })
-        }
-      }
+        })
+      })
+
+      // 等待所有stat调用完成
+      const statResults = await Promise.all(statPromises)
+      fileInfos.push(...statResults)
       
       logger.info('SMB批量stat完成', { 
         remotePath, 

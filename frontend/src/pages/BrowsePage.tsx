@@ -383,15 +383,26 @@ const BrowsePage: React.FC = () => {
   //   }
   // };
 
+  // 处理表格排序变化
+  const handleTableChange = (_pagination: any, _filters: any, sorter: any) => {
+    if (sorter && sorter.field) {
+      const field = sorter.field as string;
+      const order = sorter.order === 'ascend' ? 'asc' : sorter.order === 'descend' ? 'desc' : 'asc';
+
+      setSortBy(field);
+      setSortOrder(order);
+    }
+  };
+
   // 生成面包屑导航
   const pathSegments = currentPath.split('/').filter(Boolean);
   const breadcrumbItems = [
     {
       title: (
         <Tooltip title="返回根目录">
-          <HomeOutlined 
-            onClick={() => setCurrentPath('/')} 
-            style={{ cursor: 'pointer', color: 'var(--primary-color)' }} 
+          <HomeOutlined
+            onClick={() => setCurrentPath('/')}
+            style={{ cursor: 'pointer', color: 'var(--primary-color)' }}
           />
         </Tooltip>
       )
@@ -417,11 +428,13 @@ const BrowsePage: React.FC = () => {
       title: '名称',
       dataIndex: 'name',
       key: 'name',
+      sorter: true,
+      sortOrder: (sortBy === 'name' ? (sortOrder === 'asc' ? 'ascend' : 'descend') : undefined) as any,
       render: (text: string, record: FileItem) => (
         <Space>
           {getFileIcon(record)}
           <span
-            style={{ 
+            style={{
               cursor: record.type === 'directory' ? 'pointer' : 'default',
               color: record.type === 'directory' ? 'var(--primary-color)' : 'var(--text-primary)',
               fontWeight: record.type === 'directory' ? 500 : 'normal'
@@ -441,6 +454,8 @@ const BrowsePage: React.FC = () => {
       dataIndex: 'size',
       key: 'size',
       width: 120,
+      sorter: true,
+      sortOrder: (sortBy === 'size' ? (sortOrder === 'asc' ? 'ascend' : 'descend') : undefined) as any,
       render: (size: number) => formatFileSize(size),
     },
     {
@@ -448,6 +463,8 @@ const BrowsePage: React.FC = () => {
       dataIndex: 'modified',
       key: 'modified',
       width: 180,
+      sorter: true,
+      sortOrder: (sortBy === 'modified' ? (sortOrder === 'asc' ? 'ascend' : 'descend') : undefined) as any,
       render: (time: string) => time ? new Date(time).toLocaleString() : '-',
     },
     {
@@ -458,8 +475,8 @@ const BrowsePage: React.FC = () => {
         <Space size="small">
           {record.type === 'file' && (
             <Tooltip title="下载文件">
-              <Button 
-                type="text" 
+              <Button
+                type="text"
                 icon={<DownloadOutlined />}
                 size="small"
                 onClick={() => handleDownload(record)}
@@ -652,6 +669,7 @@ const BrowsePage: React.FC = () => {
                 rowKey="path"
                 pagination={false}
                 size="small"
+                onChange={handleTableChange}
               />
             ) : (
               renderGridView()
