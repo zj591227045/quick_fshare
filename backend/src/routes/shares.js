@@ -61,6 +61,28 @@ router.post('/validate-password',
 );
 
 /**
+ * @route   POST /api/shares/enumerate-smb-shares
+ * @desc    枚举SMB共享
+ * @access  Private
+ */
+router.post('/enumerate-smb-shares',
+  requireAuth,
+  adminRateLimit,
+  shareController.enumerateSMBShares
+);
+
+/**
+ * @route   POST /api/shares/browse-smb-directory
+ * @desc    浏览SMB共享目录
+ * @access  Private
+ */
+router.post('/browse-smb-directory',
+  requireAuth,
+  adminRateLimit,
+  shareController.browseSMBDirectory
+);
+
+/**
  * @route   GET /api/shares/:id
  * @desc    获取单个分享路径
  * @access  Private
@@ -104,4 +126,4 @@ router.delete('/:id',
   shareController.deleteShare
 );
 
-module.exports = router; 
+module.exports = router;

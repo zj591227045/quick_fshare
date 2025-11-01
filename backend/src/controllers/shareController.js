@@ -2,6 +2,8 @@ const Share = require('../models/Share');
 const logger = require('../utils/logger');
 const { asyncHandler } = require('../middleware/errorHandler');
 const dbManager = require('../config/database');
+const smbEnumerate = require('smb-enumerate-shares');
+const SMB2 = require('@marsaud/smb2');
 
 /**
  * 获取分享路径列表
@@ -428,6 +430,201 @@ const toggleShareStatus = asyncHandler(async (req, res) => {
   }
 });
 
+/**
+ * 枚举SMB共享
+ */
+const enumerateSMBShares = asyncHandler(async (req, res) => {
+  try {
+    const { server_ip, port = 445, username, password, domain = 'WORKGROUP' } = req.body;
+    
+    if (!server_ip) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'MISSING_SERVER_IP',
+          message: '服务器地址不能为空',
+        },
+      });
+    }
+
+    // 构建SMB配置 - smb-enumerate-shares需要的格式
+    const smbConfig = {
+      host: server_ip,
+      port: parseInt(port),
+      username: username || '',
+      password: password || '',
+      domain: domain,
+    };
+
+    // 使用smb-enumerate-shares枚举共享
+    const shares = await smbEnumerate(smbConfig);
+    
+    res.json({
+      success: true,
+      data: { shares },
+      message: '获取SMB共享列表成功',
+    });
+    
+  } catch (error) {
+    logger.error('枚举SMB共享失败:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'ENUMERATE_SMB_SHARES_ERROR',
+        message: `枚举SMB共享失败: ${error.message}`,
+      },
+    });
+  }
+});
+
+/**
+ * 浏览SMB共享目录
+ */
+const browseSMBDirectory = asyncHandler(async (req, res) => {
+  try {
+    const { server_ip, port = 445, username, password, domain = 'WORKGROUP', share_name, path = '/' } = req.body;
+    
+    if (!server_ip || !share_name) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'MISSING_PARAMETERS',
+          message: '服务器地址和共享名称不能为空',
+        },
+      });
+    }
+
+    // 构建SMB连接配置 - SMB2需要的格式
+    const smbConfig = {
+      share: `\\\\${server_ip}\\${share_name}`,
+      username: username || '',
+      password: password || '',
+      domain: domain,
+    };
+
+    // 创建SMB2客户端
+    const smb2 = new SMB2(smbConfig);
+    
+    try {
+      // 列出目录内容 - SMB2的readdir方法需要正确的路径格式
+      // 注意：SMB2的readdir方法路径应该是相对于共享根目录的路径
+      const fullPath = path === '/' || path === '' ? '' : path.replace(/^\//, '');
+      
+      // 使用SMB2的readdirAsync方法获取文件详细信息
+      const files = await new Promise((resolve, reject) => {
+        smb2.readdir(fullPath, (err, files) => {
+          if (err) {
+            reject(err);
+          } else {
+            // SMB2的readdir返回字符串数组，需要获取每个文件的详细信息
+            const filePromises = files.map(fileName => {
+              return new Promise((resolveFile, rejectFile) => {
+                const filePath = fullPath ? `${fullPath}/${fileName}` : fileName;
+                smb2.stat(filePath, (statErr, stats) => {
+                  if (statErr) {
+                    // 如果stat失败，至少返回基本信息
+                    resolveFile({
+                      name: fileName,
+                      isDirectory: false,
+                      size: 0,
+                      lastWriteTime: new Date().toISOString()
+                    });
+                  } else {
+                    resolveFile({
+                      name: fileName,
+                      isDirectory: stats.isDirectory(),
+                      size: stats.size || 0,
+                      lastWriteTime: stats.mtime ? new Date(stats.mtime * 1000).toISOString() : new Date().toISOString()
+                    });
+                  }
+                });
+              });
+            });
+            
+            Promise.all(filePromises)
+              .then(fileDetails => resolve(fileDetails))
+              .catch(reject);
+          }
+        });
+      });
+
+      // 添加调试日志
+      logger.info('SMB2返回的文件详细信息:', files);
+      
+      // 处理文件列表 - SMB2的文件对象需要正确判断目录
+      const fileList = files.map((file, index) => {
+        // 添加每个文件的详细调试信息
+        logger.info(`文件 ${index}:`, {
+          name: file.name,
+          isDirectory: file.isDirectory,
+          fileAttributes: file.fileAttributes,
+          size: file.size,
+          lastWriteTime: file.lastWriteTime,
+          lastWriteTimeRaw: file.lastWriteTimeRaw
+        });
+        
+        // SMB2中，目录通常没有size属性，或者size为0，但需要更准确的判断
+        const isDirectory = file.isDirectory || 
+                              (file.fileAttributes && file.fileAttributes.isDirectory) ||
+                              (!file.size && file.name && !file.name.includes('.')) ||
+                              (file.name && file.name.endsWith('/'));
+        
+        // 构建正确的路径
+        let filePath;
+        if (path === '/' || path === '') {
+          filePath = `/${file.name}`;
+        } else {
+          // 确保路径格式正确，避免重复的斜杠
+          const cleanPath = path.replace(/\/+$/, ''); // 移除末尾的斜杠
+          filePath = `${cleanPath}/${file.name}`;
+        }
+        
+        const result = {
+          name: file.name,
+          type: isDirectory ? 'directory' : 'file',
+          size: file.size || 0,
+          modified: file.lastWriteTime || file.lastWriteTimeRaw || new Date().toISOString(),
+          path: filePath,
+        };
+        
+        logger.info(`处理后的文件 ${index}:`, result);
+        return result;
+      });
+      
+      logger.info('最终文件列表:', fileList);
+
+      res.json({
+        success: true,
+        data: {
+          current_path: path,
+          files: fileList,
+          total: fileList.length,
+        },
+        message: '获取目录内容成功',
+      });
+      
+    } catch (error) {
+      logger.error('浏览SMB目录失败:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'BROWSE_SMB_DIRECTORY_ERROR',
+          message: `浏览SMB目录失败: ${error.message}`,
+        },
+      });
+    }
+  } catch (error) {
+    logger.error('浏览SMB目录失败:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'BROWSE_SMB_DIRECTORY_ERROR',
+        message: `浏览SMB目录失败: ${error.message}`,
+      },
+    });
+  }
+});
+
 module.exports = {
   getShares,
   getShare,
@@ -438,4 +635,6 @@ module.exports = {
   validateSharePassword,
   getShareStats,
   toggleShareStatus,
-}; 
+  enumerateSMBShares,
+  browseSMBDirectory,
+};

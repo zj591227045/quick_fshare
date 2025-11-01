@@ -292,6 +292,34 @@ class ApiClient {
         method: 'GET',
         url: '/shares/enabled',
       }),
+
+    enumerateSMBShares: (data: {
+      server_ip: string;
+      port?: number;
+      username?: string;
+      password?: string;
+      domain?: string;
+    }): Promise<ApiResponse<{ shares: any[] }>> =>
+      this.request({
+        method: 'POST',
+        url: '/shares/enumerate-smb-shares',
+        data,
+      }),
+
+    browseSMBDirectory: (data: {
+      server_ip: string;
+      port?: number;
+      username?: string;
+      password?: string;
+      domain?: string;
+      share_name: string;
+      path?: string;
+    }): Promise<ApiResponse<{ current_path: string; files: any[]; total: number }>> =>
+      this.request({
+        method: 'POST',
+        url: '/shares/browse-smb-directory',
+        data,
+      }),
   }
 
   // 文件浏览API
@@ -527,4 +555,4 @@ export const configApi = apiClient.config
 export const systemApi = apiClient.system
 export const uploadApi = apiClient.upload
 
-export default apiClient 
+export default apiClient

@@ -5,6 +5,7 @@ import { SharePath, CreateShareRequest } from '@/types';
 import { sharesApi, browseApi } from '@/services/api';
 import IndexManagementPanel from '@/components/IndexManagementPanel';
 import IncrementalConfigModal from '@/components/IncrementalConfigModal';
+import CreateShareWizard from '@/components/CreateShareWizard';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -24,6 +25,9 @@ const SharesPage: React.FC = () => {
   const [configModalVisible, setConfigModalVisible] = useState(false);
   const [selectedShareIds, setSelectedShareIds] = useState<number[]>([]);
   const [batchOperating, setBatchOperating] = useState(false);
+  
+  // 向导式新建分享状态
+  const [wizardVisible, setWizardVisible] = useState(false);
 
   // 加载分享列表
   const loadShares = async () => {
@@ -154,15 +158,13 @@ const SharesPage: React.FC = () => {
   ];
 
   const handleAdd = () => {
-    setEditingShare(null);
-    setShareType('local');
-    form.resetFields();
-    form.setFieldsValue({
-      type: 'local',
-      access_type: 'public',
-      enabled: true,
-    });
-    setIsModalOpen(true);
+    // 使用向导式新建分享
+    setWizardVisible(true);
+  };
+
+  const handleWizardSuccess = () => {
+    setWizardVisible(false);
+    loadShares(); // 重新加载分享列表
   };
 
   const handleEdit = (share: SharePath) => {
@@ -640,8 +642,15 @@ const SharesPage: React.FC = () => {
           message.success('配置已更新，将在下次检查时生效');
         }}
       />
+
+      {/* 向导式新建分享 */}
+      <CreateShareWizard
+        visible={wizardVisible}
+        onCancel={() => setWizardVisible(false)}
+        onSuccess={handleWizardSuccess}
+      />
     </div>
   );
 };
 
-export default SharesPage; 
+export default SharesPage;
